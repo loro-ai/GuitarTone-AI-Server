@@ -13,11 +13,22 @@ async function startServer() {
 
   app.set("trust proxy", 1);
 
-  // 🔥 MANEJO MANUAL (CLAVE)
-  app.use((req, res, next) => {
-    const origin = req.headers.origin || "*";
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "https://guitar-tone-ai.vercel.app",
+  ];
 
-    res.setHeader("Access-Control-Allow-Origin", origin);
+  // 🔥 CORS manual robusto
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+
+    if (origin && allowedOrigins.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    } else if (!origin) {
+      // permite curl, postman, server-to-server
+      res.setHeader("Access-Control-Allow-Origin", "*");
+    }
+
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader(
       "Access-Control-Allow-Methods",
@@ -58,7 +69,7 @@ async function startServer() {
 
   server.listen(ENV.port, () => {
     console.log(`[Server] Running on port ${ENV.port}`);
-    console.log(`[CORS] Manual mode enabled`);
+    console.log(`[CORS] Allowed origins:`, allowedOrigins);
   });
 }
 
