@@ -6,6 +6,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { ENV } from "./env";
+import superjson from "superjson";
 
 async function startServer() {
   const app = express();
@@ -71,6 +72,7 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
+      transformer: superjson,
     })
   );
 
