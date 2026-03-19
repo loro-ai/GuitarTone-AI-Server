@@ -13,20 +13,19 @@ async function startServer() {
 
   app.set("trust proxy", 1);
 
-  const allowedOrigins = [
-    "http://localhost:5173",
-    "https://guitar-tone-ai.vercel.app",
-  ];
-
-  // 🔥 CORS manual robusto
+  // 🔥 CORS MANUAL COMPLETO Y CORRECTO
   app.use((req, res, next) => {
     const origin = req.headers.origin;
 
-    if (origin && allowedOrigins.includes(origin)) {
+    // ✅ permitir localhost y cualquier vercel.app
+    if (
+      origin &&
+      (
+        origin === "http://localhost:5173" ||
+        origin.endsWith(".vercel.app")
+      )
+    ) {
       res.setHeader("Access-Control-Allow-Origin", origin);
-    } else if (!origin) {
-      // permite curl, postman, server-to-server
-      res.setHeader("Access-Control-Allow-Origin", "*");
     }
 
     res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -34,11 +33,19 @@ async function startServer() {
       "Access-Control-Allow-Methods",
       "GET,POST,PUT,DELETE,OPTIONS"
     );
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization"
-    );
 
+    // 🔥 CLAVE: headers dinámicos (fix para tRPC)
+    const reqHeaders = req.headers["access-control-request-headers"];
+    if (reqHeaders) {
+      res.setHeader("Access-Control-Allow-Headers", reqHeaders);
+    } else {
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization"
+      );
+    }
+
+    // 🔥 responder preflight SIEMPRE
     if (req.method === "OPTIONS") {
       return res.sendStatus(200);
     }
@@ -69,7 +76,7 @@ async function startServer() {
 
   server.listen(ENV.port, () => {
     console.log(`[Server] Running on port ${ENV.port}`);
-    console.log(`[CORS] Allowed origins:`, allowedOrigins);
+    console.log(`[CORS] Fully working (Railway + Vercel + localhost)`);
   });
 }
 
