@@ -15,41 +15,24 @@ async function startServer() {
   // 🔧 IMPORTANTE para Railway / proxies
   app.set("trust proxy", 1);
 
-  // 🔥 FIX DEFINITIVO CORS (maneja TODO manualmente)
-  app.use((req, res, next) => {
-    const origin = req.headers.origin as string | undefined;
+  // ✅ CORS SIMPLE Y ESTABLE (SIN FUNCIONES DINÁMICAS)
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "https://guitar-tone-ai.vercel.app",
+  ];
 
-    if (
-      !origin ||
-      origin.includes("localhost:5173") ||
-      origin.endsWith(".vercel.app") ||
-      origin.startsWith("capacitor://")
-    ) {
-      res.setHeader("Access-Control-Allow-Origin", origin || "*");
-    }
-
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET,POST,PUT,DELETE,OPTIONS"
-    );
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization"
-    );
-
-    // 🔥 responder preflight SIEMPRE
-    if (req.method === "OPTIONS") {
-      return res.sendStatus(200);
-    }
-
-    next();
-  });
-
-  // ✅ CORS simple como respaldo
   app.use(
     cors({
-      origin: true,
+      origin: allowedOrigins,
+      credentials: true,
+    })
+  );
+
+  // 🔥 PREVENTIVO: manejar preflight correctamente
+  app.options(
+    "*",
+    cors({
+      origin: allowedOrigins,
       credentials: true,
     })
   );
@@ -77,7 +60,7 @@ async function startServer() {
 
   server.listen(ENV.port, () => {
     console.log(`[Server] Running on port ${ENV.port}`);
-    console.log(`[CORS] Fully enabled (Railway + Vercel + localhost)`);
+    console.log(`[CORS] Allowed origins:`, allowedOrigins);
   });
 }
 
