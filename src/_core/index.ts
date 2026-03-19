@@ -15,15 +15,24 @@ async function startServer() {
   // CORS — permite requests desde el frontend en Vercel
   app.use(
     cors({
-      origin: [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://guitar-tone-ai.vercel.app",
-        ENV.frontendUrl,
-      ].filter(Boolean),
+      origin: function (origin, callback) {
+        const permitidos = [
+          "http://localhost:5173",
+          "http://localhost:3000",
+          "http://localhost",
+        ];
+        if (
+          !origin ||
+          origin.includes("vercel.app") ||
+          origin.includes("railway.app") ||
+          permitidos.includes(origin)
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
       credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
     })
   );
 
