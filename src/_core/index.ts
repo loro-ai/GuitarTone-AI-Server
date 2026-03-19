@@ -1,4 +1,9 @@
 import "dotenv/config";
+import crypto from "crypto"; // 👈 AÑADE ESTO
+if (!globalThis.crypto) {
+  // @ts-ignore
+  globalThis.crypto = crypto.webcrypto;
+}
 import express from "express";
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
