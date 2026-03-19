@@ -12,27 +12,40 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
+  // 🔧 IMPORTANTE para proxies (Railway, etc.)
+  app.set("trust proxy", 1);
 
+  // ✅ Configuración CORS robusta
+  const corsOptions: cors.CorsOptions = {
+    origin: (origin, callback) => {
+      const permitidos = [
+        "http://localhost:5173",
+        "https://localhost",
+        "capacitor://localhost",
+        "http://localhost",
+      ];
 
-app.use(cors({
-  origin: function(origin, callback) {
-    const permitidos = [
-      'http://localhost:5173',  // dev web
-      'https://localhost',      // Capacitor Android
-      'capacitor://localhost',  // Capacitor Android/iOS
-      'http://localhost',       // Capacitor fallback
-    ]
-    if (!origin ||
-        origin.includes('vercel.app') ||
-        permitidos.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-}));
+      if (
+        !origin || // permite Postman, curl, etc.
+        permitidos.includes(origin) ||
+        origin.endsWith(".vercel.app") // soporta todos los deploy previews
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  };
 
+  app.use(cors(corsOptions));
+
+  // 🔥 CLAVE: manejar preflight correctamente
+  app.options("*", cors(corsOptions));
+
+  // Body parsers
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
@@ -41,7 +54,7 @@ app.use(cors({
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  // OAuth callback
+  // OAuth routes
   registerOAuthRoutes(app);
 
   // tRPC API
@@ -55,7 +68,7 @@ app.use(cors({
 
   server.listen(ENV.port, () => {
     console.log(`[Server] Running on port ${ENV.port}`);
-    console.log(`[CORS] Allowing origin: ${ENV.frontendUrl}`);
+    console.log(`[CORS] Ready for Vercel, Capacitor y localhost`);
   });
 }
 
