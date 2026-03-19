@@ -1,7 +1,7 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "../shared/const";
 import { parse as parseCookieHeader } from "cookie";
-import { randomBytes, pbkdf2Sync } from "crypto";
 import type { Request } from "express";
+import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 
 import * as db from "../db";
@@ -11,16 +11,11 @@ import { ForbiddenError } from "../shared/errors";
 // ─── Utilidades de contraseña ─────────────────────────────────────────────────
 
 export function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString("hex");
-  const hash = pbkdf2Sync(password, salt, 100000, 64, "sha512").toString("hex");
-  return `${salt}:${hash}`;
+  return bcrypt.hashSync(password, 12);
 }
 
-export function verifyPassword(password: string, stored: string): boolean {
-  const [salt, hash] = stored.split(":");
-  if (!salt || !hash) return false;
-  const verify = pbkdf2Sync(password, salt, 100000, 64, "sha512").toString("hex");
-  return verify === hash;
+export function verifyPassword(password: string, hash: string): boolean {
+  return bcrypt.compareSync(password, hash);
 }
 
 // ─── JWT de sesión ────────────────────────────────────────────────────────────
