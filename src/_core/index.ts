@@ -1,6 +1,5 @@
 import "dotenv/config";
 import express from "express";
-import cors from "cors";
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
@@ -12,30 +11,29 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // 🔧 IMPORTANTE para Railway / proxies
   app.set("trust proxy", 1);
 
-  // ✅ CORS SIMPLE Y ESTABLE (SIN FUNCIONES DINÁMICAS)
-  const allowedOrigins = [
-    "http://localhost:5173",
-    "https://guitar-tone-ai.vercel.app",
-  ];
+  // 🔥 MANEJO MANUAL (CLAVE)
+  app.use((req, res, next) => {
+    const origin = req.headers.origin || "*";
 
-  app.use(
-    cors({
-      origin: allowedOrigins,
-      credentials: true,
-    })
-  );
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,DELETE,OPTIONS"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization"
+    );
 
-  // 🔥 PREVENTIVO: manejar preflight correctamente
-  app.options(
-    "*",
-    cors({
-      origin: allowedOrigins,
-      credentials: true,
-    })
-  );
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(200);
+    }
+
+    next();
+  });
 
   // Body parsers
   app.use(express.json({ limit: "50mb" }));
@@ -46,10 +44,10 @@ async function startServer() {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  // OAuth routes
+  // OAuth
   registerOAuthRoutes(app);
 
-  // tRPC API
+  // tRPC
   app.use(
     "/api/trpc",
     createExpressMiddleware({
@@ -60,7 +58,7 @@ async function startServer() {
 
   server.listen(ENV.port, () => {
     console.log(`[Server] Running on port ${ENV.port}`);
-    console.log(`[CORS] Allowed origins:`, allowedOrigins);
+    console.log(`[CORS] Manual mode enabled`);
   });
 }
 
