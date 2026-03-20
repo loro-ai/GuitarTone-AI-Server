@@ -232,7 +232,7 @@ REGLAS CRÍTICAS — NUNCA violar:
 
 Responde SOLO con este JSON (sin markdown):
 {
-  "efectos": [{"nombre": "Nombre del efecto", "tipo": "reverb|delay|distorsion|modulacion|wah|comp|clean", "posicion": "posicion en la cadena"}],
+  "efectos": [{"nombre": "Nombre exacto del pedal/efecto", "marca": "Marca fabricante", "modelo": "Modelo exacto", "tipo": "distorsion|overdrive|fuzz|reverb|delay|chorus|flanger|phaser|wah|comp|eq|boost|tremolo|vibrato|pitch|octave|clean", "posicion": "posicion en la cadena"}],
   "amplificador": {"marca": "...", "modelo": "...", "configuracion": "descripcion de EQ y ganancia"},
   "guitarra": {"marca": "...", "modelo": "...", "pastillas": "tipo de pastillas"},
   "cadena_senal": ["guitarra", "efecto1", "amplificador"],
@@ -249,7 +249,7 @@ Responde SOLO con este JSON (sin markdown):
             { role: "system", content: systemPrompt },
             {
               role: "user",
-              content: `Investiga el tono de "${input.title}" de "${input.artist}". Usa web search para encontrar información precisa.`,
+              content: `Busca específicamente: "${input.title} ${input.artist} guitar pedals tone" y "${input.artist} rig rundown ${input.title}". Necesito el gear EXACTO usado en ESA canción, no el arsenal general del artista.`,
             },
           ],
           responseFormat: { type: "json" },
@@ -258,7 +258,7 @@ Responde SOLO con este JSON (sin markdown):
 
         // FIX: Mapear correctamente los campos del JSON que retorna la IA
         const researchData = parseJSON<{
-          efectos?: Array<{ nombre: string; tipo: string; posicion?: string }>;
+          efectos?: Array<{ nombre: string; marca?: string; modelo?: string; tipo: string; posicion?: string }>;
           amplificador?: { marca?: string; modelo?: string; configuracion?: string };
           guitarra?: { marca?: string; modelo?: string; pastillas?: string };
           cadena_senal?: string[];
@@ -340,7 +340,7 @@ Responde SOLO con este JSON (sin markdown):
       "nombre": "Nombre exacto del pedal/efecto",
       "marca": "Marca del fabricante",
       "modelo": "Modelo exacto",
-      "tipo": "distorsion|overdrive|fuzz|reverb|delay|chorus|flanger|phaser|wah|comp|eq|boost|vibe|tremolo|pitch|looper|clean",
+      "tipo": "distorsion|overdrive|fuzz|reverb|delay|chorus|flanger|phaser|wah|comp|eq|boost|tremolo|vibrato|pitch|octave|clean",
       "posicion": "número o descripción de posición en la cadena"
     }
   ],
@@ -368,7 +368,7 @@ Responde SOLO con este JSON (sin markdown):
               { role: "system", content: researchSystemPrompt },
               {
                 role: "user",
-                content: `Investiga el gear exacto de "${input.title}" de "${input.artist}". Busca en Rig Rundowns y fuentes verificadas.`,
+                content: `Busca específicamente: "${input.title} ${input.artist} guitar pedals tone" y "${input.artist} rig rundown ${input.title}". Necesito el gear EXACTO usado en ESA canción, no el arsenal general del artista.`,
               },
             ],
             responseFormat: { type: "json" },
