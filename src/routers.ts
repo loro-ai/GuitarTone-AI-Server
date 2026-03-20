@@ -23,8 +23,13 @@ type N8nPresetResponse = {
   configuracion_base: GearConfigRaw[];
   presetsData: Array<{
     nombre: string;
+    tag?: string;
+    etiqueta?: string;
+    descripcion_corta?: string;
     momento_cancion: string;
+    efecto_principal?: string;
     descripcion: string;
+    explicacion?: string;
     configuracion: GearConfigRaw[];
     nota_tecnica?: string;
     consejos?: string[];

@@ -19,8 +19,13 @@ export interface GearConfig {
 
 export interface PresetConfig {
   nombre: string;
+  tag?: string;
+  etiqueta?: string;
+  descripcion_corta?: string;
   momento_cancion: string;
+  efecto_principal?: string;
   descripcion: string;
+  explicacion?: string;
   /** Configuración individual por cada equipo del usuario */
   configuracion: GearConfig[];
   nota_tecnica?: string;
@@ -53,16 +58,7 @@ const presetSchema = new mongoose.Schema<IPreset>(
     songArtist: { type: String },
     gearIds: [String],
     configuracion_base: { type: mongoose.Schema.Types.Mixed },
-    presetsData: [
-      {
-        nombre: String,
-        momento_cancion: String,
-        descripcion: String,
-        configuracion: { type: mongoose.Schema.Types.Mixed },
-        nota_tecnica: String,
-        consejos: [String],
-      },
-    ],
+    presetsData: { type: mongoose.Schema.Types.Mixed },
     advertencia: { type: String },
     isFavorite: { type: Boolean, default: false },
     rating: { type: Number, min: 1, max: 5 },
