@@ -124,12 +124,67 @@ export async function updateGearManual(
 
 // ============ SONG HELPERS ============
 
+/**
+ * Busca una canción por título y artista exactos (case-insensitive)
+ */
+export async function getSongByTitleAndArtist(
+  title: string,
+  artist: string
+): Promise<ISong | null> {
+  // Escapar caracteres especiales de regex
+  const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const titleRegex = new RegExp(`^${escapeRegex(title)}$`, 'i');
+  const artistRegex = new RegExp(`^${escapeRegex(artist)}$`, 'i');
+
+  const song = await Song.findOne({
+    title: { $regex: titleRegex },
+    artist: { $regex: artistRegex },
+  }).lean();
+  return song;
+}
+
+/**
+ * Obtiene o crea una canción.
+ * Prioridad: 1) título+artista → 2) musicBrainzId → 3) creación nueva.
+ * Si se encuentra por título+artista, actualiza la coverUrl si es diferente,
+ * pero conserva el musicBrainzId existente.
+ */
 export async function createOrGetSong(
   song: Omit<ISong, "_id" | "createdAt" | "updatedAt">
 ): Promise<ISong> {
   try {
-    let existing = await Song.findOne({ musicBrainzId: song.musicBrainzId });
-    if (existing) return existing.toObject();
+    // 1. Buscar por título y artista
+    const existingByTitleArtist = await getSongByTitleAndArtist(song.title, song.artist);
+    if (existingByTitleArtist) {
+      // Actualizar coverUrl si es necesario
+      if (song.coverUrl && existingByTitleArtist.coverUrl !== song.coverUrl) {
+        await Song.updateOne(
+          { _id: existingByTitleArtist._id },
+          { coverUrl: song.coverUrl }
+        );
+        // Retornar el documento actualizado (re-leer)
+        const updated = await Song.findById(existingByTitleArtist._id).lean();
+        return updated!;
+      }
+      return existingByTitleArtist;
+    }
+
+    // 2. Buscar por musicBrainzId
+    let existing = await Song.findOne({ musicBrainzId: song.musicBrainzId }).lean();
+    if (existing) {
+      // También actualizar coverUrl si cambió
+      if (song.coverUrl && existing.coverUrl !== song.coverUrl) {
+        await Song.updateOne(
+          { _id: existing._id },
+          { coverUrl: song.coverUrl }
+        );
+        const updated = await Song.findById(existing._id).lean();
+        return updated!;
+      }
+      return existing;
+    }
+
+    // 3. Crear nueva canción
     const newSong = await Song.create(song);
     return newSong.toObject();
   } catch (error) {

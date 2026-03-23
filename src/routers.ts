@@ -119,7 +119,6 @@ const gearSchema = z.object({
 });
 
 const generatePresetSchema = z.object({
-  // FIX: songId y gearIds son strings (ObjectIds de MongoDB, no números)
   songId: z.string().min(1),
   gearIds: z.array(z.string().min(1)),
 });
@@ -172,13 +171,47 @@ async function getDeezerTrackById(id: string): Promise<DeezerTrack | null> {
 
 const songsRouter = router({
   search: publicProcedure.input(searchSongSchema).query(async ({ input }) => {
+    // 1. Primero buscar en la base de datos por título+artista (case-insensitive)
+    const existingSong = await db.getSongByTitleAndArtist(input.title, input.artist);
+    if (existingSong) {
+      // Si existe, devolverlo como si fuera un resultado de búsqueda
+      return [{
+        id: String(existingSong._id),
+        musicBrainzId: existingSong.musicBrainzId,
+        title: existingSong.title,
+        artist: existingSong.artist,
+        coverUrl: existingSong.coverUrl,
+        hasToneResearch: !!existingSong.toneResearch?.researchedAt,
+      }];
+    }
+
+    // 2. No existe en la BD → buscar en Deezer
     const results = await searchDeezer(input.title, input.artist);
-    return results.map((r) => ({
-      id: String(r.id),
-      title: r.title,
-      artist: r.artist.name,
-      coverUrl: r.album.cover_medium,
+    // Mapear y, para cada resultado, verificar si ya existe en la BD (por título+artista)
+    const enrichedResults = await Promise.all(results.map(async (r) => {
+      const existing = await db.getSongByTitleAndArtist(r.title, r.artist.name);
+      if (existing) {
+        // Ya existe, usar los datos de la BD (coverUrl puede ser de Deezer o de la BD)
+        return {
+          id: String(existing._id),
+          musicBrainzId: existing.musicBrainzId,
+          title: existing.title,
+          artist: existing.artist,
+          coverUrl: existing.coverUrl || r.album.cover_medium,
+          hasToneResearch: !!existing.toneResearch?.researchedAt,
+        };
+      }
+      return {
+        id: String(r.id),
+        musicBrainzId: String(r.id),
+        title: r.title,
+        artist: r.artist.name,
+        coverUrl: r.album.cover_medium,
+        hasToneResearch: false,
+      };
     }));
+
+    return enrichedResults;
   }),
 
   getById: publicProcedure
@@ -197,7 +230,6 @@ const songsRouter = router({
   researchTone: publicProcedure
     .input(
       z.object({
-        // FIX: musicBrainzId como string
         musicBrainzId: z.string(),
         title: z.string(),
         artist: z.string(),
@@ -205,7 +237,7 @@ const songsRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      // FIX: Primero crear/obtener la canción en MongoDB para tener su _id
+      // Crear/obtener la canción (buscará primero por título+artista)
       const song = await db.createOrGetSong({
         musicBrainzId: input.musicBrainzId,
         title: input.title,
@@ -213,7 +245,7 @@ const songsRouter = router({
         coverUrl: input.coverUrl,
       });
 
-      // Si ya tiene investigación de tono, retornarla del cache
+      // Si ya tiene investigación, retornar desde cache
       if (song.toneResearch?.researchedAt) {
         console.log("[researchTone] Cache hit para:", input.title);
         return { success: true, data: song.toneResearch, songDbId: String(song._id) };
@@ -261,7 +293,6 @@ Responde SOLO con este JSON (sin markdown):
           useWebSearch: true,
         });
 
-        // FIX: Mapear correctamente los campos del JSON que retorna la IA
         const researchData = parseJSON<{
           efectos?: Array<{ nombre: string; marca?: string; modelo?: string; tipo: string; posicion?: string }>;
           amplificador?: { marca?: string; modelo?: string; configuracion?: string };
@@ -286,7 +317,6 @@ Responde SOLO con este JSON (sin markdown):
           researchedAt: new Date(),
         };
 
-        // FIX: Guardar correctamente en MongoDB con _id real
         await db.updateSongToneResearch(String(song._id), toneResearch);
 
         return {
@@ -850,8 +880,6 @@ const historyRouter = router({
     db.clearUserSearchHistory(String(ctx.user._id || ctx.user.openId))
   ),
 });
-
-// ─── Main Router ──────────────────────────────────────────────────────────────
 
 // ─── Auth Router ──────────────────────────────────────────────────────────────
 
