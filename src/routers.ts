@@ -46,7 +46,6 @@ async function callN8nPresetGenerator(payload: {
   userId: string;
   songDbId: string;
 }): Promise<N8nPresetResponse> {
-  // Usar Orchestrator v2 si está configurado, sino fallback a v1
   const webhookUrl = ENV.n8nWebhookUrlV2 || ENV.n8nWebhookUrl;
 
   if (!webhookUrl) {
@@ -84,8 +83,6 @@ async function callN8nPresetGenerator(payload: {
     if (!data.presetsData) {
       throw new Error("n8n retornó respuesta sin estructura válida");
     }
-    // presetsData puede ser [] si todos los pedales son advertencias
-    // pero debe haber al menos configuracion_base o presetsData con items
     if (data.presetsData.length === 0 && (!data.configuracion_base || data.configuracion_base.length === 0)) {
       throw new Error("n8n retornó presets y configuración base vacíos");
     }
@@ -171,41 +168,32 @@ async function getDeezerTrackById(id: string): Promise<DeezerTrack | null> {
 
 const songsRouter = router({
   search: publicProcedure.input(searchSongSchema).query(async ({ input }) => {
-    // 1. Buscar siempre en Deezer para obtener portada y datos frescos
+    // 1. Buscar en Deezer
     const deezerResults = await searchDeezer(input.title, input.artist);
-    if (deezerResults.length === 0) {
-      return [];
-    }
+    if (deezerResults.length === 0) return [];
 
-    // 2. Por cada resultado, asegurar que existe en la BD (crear o actualizar)
-    //    y devolver los datos en el formato esperado.
-    //    Para evitar duplicados en el frontend, deduplicamos por el _id de la canción.
-    const songs = new Map<string, any>();
-
-    for (const r of deezerResults) {
-      const coverUrl = r.album.cover_medium;
-      // Usamos createOrGetSong que ya maneja búsqueda por título+artista
-      const song = await db.createOrGetSong({
+    // 2. Para cada resultado, verificar si ya existe en la BD (sin crearla)
+    const enriched = await Promise.all(deezerResults.map(async (r) => {
+      const existing = await db.getSongByTitleAndArtist(r.title, r.artist.name);
+      return {
+        id: String(r.id),
         musicBrainzId: String(r.id),
         title: r.title,
         artist: r.artist.name,
-        coverUrl: coverUrl,
-      });
+        coverUrl: r.album.cover_medium,
+        hasToneResearch: !!existing?.toneResearch?.researchedAt,
+      };
+    }));
 
-      const songId = String(song._id);
-      if (!songs.has(songId)) {
-        songs.set(songId, {
-          id: songId,
-          musicBrainzId: song.musicBrainzId,
-          title: song.title,
-          artist: song.artist,
-          coverUrl: song.coverUrl,
-          hasToneResearch: !!song.toneResearch?.researchedAt,
-        });
-      }
+    // 3. Opcional: eliminar duplicados por título+artista si Deezer devolvió varios
+    //    (aunque la API no suele hacerlo, por seguridad)
+    const unique = new Map<string, typeof enriched[0]>();
+    for (const item of enriched) {
+      const key = `${item.title}|${item.artist}`.toLowerCase();
+      if (!unique.has(key)) unique.set(key, item);
     }
 
-    return Array.from(songs.values());
+    return Array.from(unique.values());
   }),
 
   getById: publicProcedure
@@ -231,7 +219,7 @@ const songsRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      // Crear/obtener la canción (buscará primero por título+artista)
+      // Crear/obtener la canción (busca primero por título+artista)
       const song = await db.createOrGetSong({
         musicBrainzId: input.musicBrainzId,
         title: input.title,
