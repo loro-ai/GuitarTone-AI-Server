@@ -171,47 +171,41 @@ async function getDeezerTrackById(id: string): Promise<DeezerTrack | null> {
 
 const songsRouter = router({
   search: publicProcedure.input(searchSongSchema).query(async ({ input }) => {
-    // 1. Primero buscar en la base de datos por título+artista (case-insensitive)
-    const existingSong = await db.getSongByTitleAndArtist(input.title, input.artist);
-    if (existingSong) {
-      // Si existe, devolverlo como si fuera un resultado de búsqueda
-      return [{
-        id: String(existingSong._id),
-        musicBrainzId: existingSong.musicBrainzId,
-        title: existingSong.title,
-        artist: existingSong.artist,
-        coverUrl: existingSong.coverUrl,
-        hasToneResearch: !!existingSong.toneResearch?.researchedAt,
-      }];
+    // 1. Buscar siempre en Deezer para obtener portada y datos frescos
+    const deezerResults = await searchDeezer(input.title, input.artist);
+    if (deezerResults.length === 0) {
+      return [];
     }
 
-    // 2. No existe en la BD → buscar en Deezer
-    const results = await searchDeezer(input.title, input.artist);
-    // Mapear y, para cada resultado, verificar si ya existe en la BD (por título+artista)
-    const enrichedResults = await Promise.all(results.map(async (r) => {
-      const existing = await db.getSongByTitleAndArtist(r.title, r.artist.name);
-      if (existing) {
-        // Ya existe, usar los datos de la BD (coverUrl puede ser de Deezer o de la BD)
-        return {
-          id: String(existing._id),
-          musicBrainzId: existing.musicBrainzId,
-          title: existing.title,
-          artist: existing.artist,
-          coverUrl: existing.coverUrl || r.album.cover_medium,
-          hasToneResearch: !!existing.toneResearch?.researchedAt,
-        };
-      }
-      return {
-        id: String(r.id),
+    // 2. Por cada resultado, asegurar que existe en la BD (crear o actualizar)
+    //    y devolver los datos en el formato esperado.
+    //    Para evitar duplicados en el frontend, deduplicamos por el _id de la canción.
+    const songs = new Map<string, any>();
+
+    for (const r of deezerResults) {
+      const coverUrl = r.album.cover_medium;
+      // Usamos createOrGetSong que ya maneja búsqueda por título+artista
+      const song = await db.createOrGetSong({
         musicBrainzId: String(r.id),
         title: r.title,
         artist: r.artist.name,
-        coverUrl: r.album.cover_medium,
-        hasToneResearch: false,
-      };
-    }));
+        coverUrl: coverUrl,
+      });
 
-    return enrichedResults;
+      const songId = String(song._id);
+      if (!songs.has(songId)) {
+        songs.set(songId, {
+          id: songId,
+          musicBrainzId: song.musicBrainzId,
+          title: song.title,
+          artist: song.artist,
+          coverUrl: song.coverUrl,
+          hasToneResearch: !!song.toneResearch?.researchedAt,
+        });
+      }
+    }
+
+    return Array.from(songs.values());
   }),
 
   getById: publicProcedure
