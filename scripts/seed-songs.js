@@ -39,229 +39,467 @@ const Song = mongoose.model('Song', songSchema);
 
 // Lista de canciones a insertar
 const songs = [
+  // ===== JUPITER =====
   {
-    musicBrainzId: "manual_around_world",
-    title: "Around the World",
-    artist: "Red Hot Chili Peppers",
-    coverUrl: "https://cdn-images.dzcdn.net/images/cover/49b073f55550d41055e02c493f9a...",
-    toneResearch: {
-      equipment: [
-        { nombre: "Ibanez WH-10 Wah", tipo: "wah", posicion: "inicio cadena" },
-        { nombre: "Boss DS-2 Turbo Distortion", tipo: "distortion", posicion: "después del wah" },
-        { nombre: "MXR Micro Amp", tipo: "boost", posicion: "después de la distorsión" },
-        { nombre: "Boss CE-1 Chorus Ensemble", tipo: "chorus", posicion: "después del boost" },
-        { nombre: "Line 6 DL4 Delay Modeler", tipo: "delay", posicion: "antes del amplificador" }
+    "musicBrainzId": "manual_dani_california",
+    "title": "Dani California",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment": [
+        {"nombre":"Boss DS-2 Turbo Distortion","tipo":"distortion","posicion":"principal"},
+        {"nombre":"MXR Micro Amp","tipo":"boost","posicion":"después"},
+        {"nombre":"Ibanez WH-10 Wah","tipo":"wah","posicion":"solo"}
       ],
-      amplificador: {
-        marca: "Marshall",
-        modelo: "JCM 800 (2203)",
-        configuracion: "gain alto, presencia media, eq: bass 6, mid 5, treble 7"
-      },
-      guitarra: {
-        marca: "Fender",
-        modelo: "Stratocaster 1962",
-        pastillas: "single coil"
-      },
-      cadenaSenal: [
-        "guitarra",
-        "Ibanez WH-10 Wah",
-        "Boss DS-2 Turbo Distortion",
-        "MXR Micro Amp",
-        "Boss CE-1 Chorus Ensemble",
-        "Line 6 DL4 Delay Modeler",
-        "amplificador"
-      ],
-      techniques: [
-        "riff funk con palm mute y ataque percusivo",
-        "solo con wah abierto y barridos de filtro",
-        "uso de double stops en el solo"
-      ],
-      notes: "El riff principal usa DS-2 en modo II (turbo) con ganancia alta. El solo combina wah y delay.",
-      nivelDistorsion: "high-gain",
-      esTocadoLimpio: false,
-      researchedAt: new Date("2026-03-23T00:00:00.000Z")
+      "amplificador":{"marca":"Marshall","modelo":"Silver Jubilee + Major","configuracion":"gain medio, master alto"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"bridge"},
+      "cadenaSenal":["guitarra","Boss DS-2","MXR Micro Amp","Ibanez WH-10 Wah","amplificador"],
+      "techniques":["riff rock","alternate picking","solo con bends amplios"],
+      "notes":"Distorsión principal del DS-2.",
+      "nivelDistorsion":"high-gain",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
     }
   },
   {
-    musicBrainzId: "manual_parallel_universe",
-    title: "Parallel Universe",
-    artist: "Red Hot Chili Peppers",
-    coverUrl: "https://cdn-images.dzcdn.net/images/cover/49b073f55550d41055e02c493f9a...",
-    toneResearch: {
-      equipment: [
-        { nombre: "Ibanez WH-10 Wah", tipo: "wah", posicion: "inicio cadena" },
-        { nombre: "Boss DS-2 Turbo Distortion", tipo: "distortion", posicion: "después del wah" },
-        { nombre: "MXR Micro Amp", tipo: "boost", posicion: "después de la distorsión" },
-        { nombre: "Line 6 DL4 Delay Modeler", tipo: "delay", posicion: "antes del amplificador" }
+    "musicBrainzId": "manual_snow",
+    "title": "Snow (Hey Oh)",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[
+        {"nombre":"Compresor (rack)","tipo":"compressor","posicion":"activo"},
+        {"nombre":"Boss CE-1 Chorus Ensemble","tipo":"chorus","posicion":"sutil"}
       ],
-      amplificador: {
-        marca: "Marshall",
-        modelo: "JCM 800 (2203)",
-        configuracion: "gain alto, eq: bass 6, mid 5, treble 7, presencia 6"
-      },
-      guitarra: {
-        marca: "Fender",
-        modelo: "Stratocaster 1962",
-        pastillas: "single coil"
-      },
-      cadenaSenal: [
-        "guitarra",
-        "Ibanez WH-10 Wah",
-        "Boss DS-2 Turbo Distortion",
-        "MXR Micro Amp",
-        "Line 6 DL4 Delay Modeler",
-        "amplificador"
-      ],
-      techniques: [
-        "riff de octavas con palm mute",
-        "solo con wah y delay slap",
-        "bending agresivos en el solo"
-      ],
-      notes: "El riff principal usa DS-2 con ganancia alta. El solo usa wah abierto y delay. No se usa chorus.",
-      nivelDistorsion: "high-gain",
-      esTocadoLimpio: false,
-      researchedAt: new Date("2026-03-23T00:00:00.000Z")
+      "amplificador":{"marca":"Fender","modelo":"Twin Reverb","configuracion":"clean brillante"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"posición 2"},
+      "cadenaSenal":["guitarra","compressor","Boss CE-1","amplificador"],
+      "techniques":["alternate picking continuo","arpegios rápidos"],
+      "notes":"Compresión clave.",
+      "nivelDistorsion":"clean",
+      "esTocadoLimpio":true,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
     }
   },
   {
-    musicBrainzId: "manual_scar_tissue",
-    title: "Scar Tissue",
-    artist: "Red Hot Chili Peppers",
-    coverUrl: "https://cdn-images.dzcdn.net/images/cover/49b073f55550d41055e02c493f9a...",
-    toneResearch: {
-      equipment: [
-        { nombre: "Ibanez WH-10 Wah", tipo: "wah", posicion: "inicio cadena" },
-        { nombre: "Boss DS-2 Turbo Distortion", tipo: "distortion", posicion: "después del wah" },
-        { nombre: "MXR Micro Amp", tipo: "boost", posicion: "después de la distorsión" },
-        { nombre: "Boss CE-1 Chorus Ensemble", tipo: "chorus", posicion: "después del boost" },
-        { nombre: "Line 6 DL4 Delay Modeler", tipo: "delay", posicion: "antes del amplificador" }
-      ],
-      amplificador: {
-        marca: "Marshall",
-        modelo: "JCM 800 (2203)",
-        configuracion: "gain medio-bajo, eq: bass 5, mid 6, treble 6, presencia 5"
-      },
-      guitarra: {
-        marca: "Fender",
-        modelo: "Stratocaster 1962",
-        pastillas: "single coil"
-      },
-      cadenaSenal: [
-        "guitarra",
-        "Ibanez WH-10 Wah",
-        "Boss DS-2 Turbo Distortion",
-        "MXR Micro Amp",
-        "Boss CE-1 Chorus Ensemble",
-        "Line 6 DL4 Delay Modeler",
-        "amplificador"
-      ],
-      techniques: [
-        "intro con slide en cuerda alta (slide de vidrio)",
-        "riff principal con fingerstyle y ataque suave",
-        "solo con wah y delay"
-      ],
-      notes: "Tono crunch suave. El DS-2 se usa en modo I (overdrive) o apagado. MXR Micro Amp como boost.",
-      nivelDistorsion: "crunch",
-      esTocadoLimpio: false,
-      researchedAt: new Date("2026-03-23T00:00:00.000Z")
+    "musicBrainzId": "manual_charlie",
+    "title": "Charlie",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"MXR Micro Amp","tipo":"boost","posicion":"leve"}],
+      "amplificador":{"marca":"Marshall","modelo":"Silver Jubilee","configuracion":"edge breakup"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"single coil"},
+      "cadenaSenal":["guitarra","MXR Micro Amp","amplificador"],
+      "techniques":["funk riff","ghost notes"],
+      "notes":"Tono dinámico.",
+      "nivelDistorsion":"edge",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
     }
   },
   {
-    musicBrainzId: "manual_otherside",
-    title: "Otherside",
-    artist: "Red Hot Chili Peppers",
-    coverUrl: "https://cdn-images.dzcdn.net/images/cover/49b073f55550d41055e02c493f9a...",
-    toneResearch: {
-      equipment: [
-        { nombre: "Boss CE-1 Chorus Ensemble", tipo: "chorus", posicion: "después de la guitarra" },
-        { nombre: "Line 6 DL4 Delay Modeler", tipo: "delay", posicion: "antes del amplificador" }
-      ],
-      amplificador: {
-        marca: "Marshall",
-        modelo: "JCM 800 (2203)",
-        configuracion: "clean, gain bajo, EQ: bass 5, mid 6, treble 6"
-      },
-      guitarra: {
-        marca: "Fender",
-        modelo: "Stratocaster 1962",
-        pastillas: "single coil"
-      },
-      cadenaSenal: ["guitarra", "Boss CE-1 Chorus Ensemble", "Line 6 DL4 Delay Modeler", "amplificador"],
-      techniques: [
-        "riff principal con fingerstyle y palm mute",
-        "uso de delay slap (approx 380ms, 2 repeticiones)",
-        "chorus sutil para dar profundidad"
-      ],
-      notes: "Canción completamente limpia. Sin wah ni distorsión. Delay slap.",
-      nivelDistorsion: "clean",
-      esTocadoLimpio: true,
-      researchedAt: new Date("2026-03-23T00:00:00.000Z")
+    "musicBrainzId": "manual_stadium_arcadium",
+    "title": "Stadium Arcadium",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Delay","tipo":"delay","posicion":"ambiente"}],
+      "amplificador":{"marca":"Fender","modelo":"Twin Reverb","configuracion":"clean"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"neck"},
+      "cadenaSenal":["guitarra","delay","amplificador"],
+      "techniques":["melodía","bends largos"],
+      "notes":"Mucho espacio.",
+      "nivelDistorsion":"clean",
+      "esTocadoLimpio":true,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
     }
   },
+
   {
-    musicBrainzId: "manual_californication",
-    title: "Californication",
-    artist: "Red Hot Chili Peppers",
-    coverUrl: "https://cdn-images.dzcdn.net/images/cover/49b073f55550d41055e02c493f9a...",
-    toneResearch: {
-      equipment: [
-        { nombre: "Boss CE-1 Chorus Ensemble", tipo: "chorus", posicion: "después de la guitarra" },
-        { nombre: "Line 6 DL4 Delay Modeler", tipo: "delay", posicion: "antes del amplificador" }
-      ],
-      amplificador: {
-        marca: "Marshall",
-        modelo: "JCM 800 (2203)",
-        configuracion: "clean, gain bajo, EQ: bass 5, mid 6, treble 6"
-      },
-      guitarra: {
-        marca: "Fender",
-        modelo: "Stratocaster 1962",
-        pastillas: "single coil"
-      },
-      cadenaSenal: ["guitarra", "Boss CE-1 Chorus Ensemble", "Line 6 DL4 Delay Modeler", "amplificador"],
-      techniques: [
-        "arpegios con fingerpicking",
-        "uso de chorus suave para dar textura",
-        "delay slap (380ms) en el estribillo"
-      ],
-      notes: "Tono completamente limpio. Chorus con tasa baja y profundidad media.",
-      nivelDistorsion: "clean",
-      esTocadoLimpio: true,
-      researchedAt: new Date("2026-03-23T00:00:00.000Z")
+    "musicBrainzId": "manual_hump_de_bump",
+    "title": "Hump de Bump",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Ibanez WH-10 Wah","tipo":"wah","posicion":"constante"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"crunch funk"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"single coil"},
+      "cadenaSenal":["guitarra","Ibanez WH-10 Wah","amplificador"],
+      "techniques":["funk con wah","groove"],
+      "notes":"Wah protagonista.",
+      "nivelDistorsion":"crunch",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
     }
   },
+
   {
-    musicBrainzId: "manual_road_trippin",
-    title: "Road Trippin'",
-    artist: "Red Hot Chili Peppers",
-    coverUrl: "https://cdn-images.dzcdn.net/images/cover/49b073f55550d41055e02c493f9a...",
-    toneResearch: {
-      equipment: [
-        { nombre: "Ningún pedal", tipo: "clean", posicion: "no aplica" }
+    "musicBrainzId": "manual_she_looks_to_me",
+    "title": "She Looks to Me",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Delay","tipo":"delay","posicion":"ambiente"}],
+      "amplificador":{"marca":"Fender","modelo":"Twin Reverb","configuracion":"clean cálido"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"neck"},
+      "cadenaSenal":["guitarra","delay","amplificador"],
+      "techniques":["melodía expresiva","bends suaves"],
+      "notes":"Ambiente amplio.",
+      "nivelDistorsion":"clean",
+      "esTocadoLimpio":true,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_tell_me_baby",
+    "title": "Tell Me Baby",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"MXR Micro Amp","tipo":"boost","posicion":"leve"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"edge"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"single coil"},
+      "cadenaSenal":["guitarra","MXR Micro Amp","amplificador"],
+      "techniques":["riff funky","ghost notes"],
+      "notes":"Entre limpio y crunch.",
+      "nivelDistorsion":"edge",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_hard_to_concentrate",
+    "title": "Hard to Concentrate",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Chorus ligero","tipo":"chorus","posicion":"sutil"}],
+      "amplificador":{"marca":"Fender","modelo":"Twin Reverb","configuracion":"clean"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"neck"},
+      "cadenaSenal":["guitarra","chorus","amplificador"],
+      "techniques":["arpegios limpios","dinámica suave"],
+      "notes":"Tono cálido y limpio.",
+      "nivelDistorsion":"clean",
+      "esTocadoLimpio":true,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_21st_century",
+    "title": "21st Century",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"MXR Micro Amp","tipo":"boost","posicion":"activo"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"crunch"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"bridge"},
+      "cadenaSenal":["guitarra","MXR Micro Amp","amplificador"],
+      "techniques":["riff funk","palm mute"],
+      "notes":"Crunch rítmico.",
+      "nivelDistorsion":"crunch",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_slow_cheetah",
+    "title": "Slow Cheetah",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Delay","tipo":"delay","posicion":"ambiente"}],
+      "amplificador":{"marca":"Fender","modelo":"Twin Reverb","configuracion":"clean"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"neck"},
+      "cadenaSenal":["guitarra","delay","amplificador"],
+      "techniques":["fraseo lento","bends suaves"],
+      "notes":"Mucho espacio.",
+      "nivelDistorsion":"clean",
+      "esTocadoLimpio":true,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  // ===== MARS =====
+
+  {
+    "musicBrainzId": "manual_wet_sand",
+    "title": "Wet Sand",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[
+        {"nombre":"Boss DS-2 Turbo Distortion","tipo":"distortion","posicion":"solo"},
+        {"nombre":"Delay","tipo":"delay","posicion":"ambiente"}
       ],
-      amplificador: {
-        marca: "Ninguno",
-        modelo: "Grabación directa",
-        configuracion: "Sin amplificador; grabación acústica directa"
-      },
-      guitarra: {
-        marca: "Martin",
-        modelo: "000-28EC (acústica)",
-        pastillas: "acústica, sin pastillas eléctricas"
-      },
-      cadenaSenal: ["guitarra acústica", "microfono", "grabadora"],
-      techniques: [
-        "fingerpicking",
-        "rasgueo suave con dedos",
-        "uso de cejilla en el traste 2"
-      ],
-      notes: "Canción completamente acústica. Martin 000-28EC. Sin efectos.",
-      nivelDistorsion: "clean",
-      esTocadoLimpio: true,
-      researchedAt: new Date("2026-03-23T00:00:00.000Z")
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"dinámico"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"single coil"},
+      "cadenaSenal":["guitarra","Boss DS-2","delay","amplificador"],
+      "techniques":["crescendo","feedback","solo emocional"],
+      "notes":"Gran dinámica.",
+      "nivelDistorsion":"crunch",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_especially_in_michigan",
+    "title": "Especially in Michigan",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Delay","tipo":"delay","posicion":"sutil"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"clean-crunch"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"middle"},
+      "cadenaSenal":["guitarra","delay","amplificador"],
+      "techniques":["riff limpio","dinámica"],
+      "notes":"Textura ambiental.",
+      "nivelDistorsion":"edge",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_warlocks",
+    "title": "Warlocks",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Ibanez WH-10 Wah","tipo":"wah","posicion":"rítmico"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"crunch"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"bridge"},
+      "cadenaSenal":["guitarra","Ibanez WH-10 Wah","amplificador"],
+      "techniques":["riff funk","wah groove"],
+      "notes":"Ritmo marcado.",
+      "nivelDistorsion":"crunch",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_cmon_girl",
+    "title": "C'mon Girl",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"MXR Micro Amp","tipo":"boost","posicion":"activo"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"crunch"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"bridge"},
+      "cadenaSenal":["guitarra","MXR Micro Amp","amplificador"],
+      "techniques":["riff rock","ataque fuerte"],
+      "notes":"Energía rock.",
+      "nivelDistorsion":"crunch",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_torture_me",
+    "title": "Torture Me",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Boss DS-2 Turbo Distortion","tipo":"distortion","posicion":"principal"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"gain alto"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"bridge"},
+      "cadenaSenal":["guitarra","Boss DS-2","amplificador"],
+      "techniques":["riff agresivo","palm mute"],
+      "notes":"Alta ganancia.",
+      "nivelDistorsion":"high-gain",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_strip_my_mind",
+    "title": "Strip My Mind",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Delay","tipo":"delay","posicion":"ambiente"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"clean-crunch"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"neck"},
+      "cadenaSenal":["guitarra","delay","amplificador"],
+      "techniques":["melodía","solo expresivo"],
+      "notes":"Gran sustain.",
+      "nivelDistorsion":"edge",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_readymade",
+    "title": "Readymade",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Boss DS-2 Turbo Distortion","tipo":"distortion","posicion":"principal"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"gain alto"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"bridge"},
+      "cadenaSenal":["guitarra","Boss DS-2","amplificador"],
+      "techniques":["riff hard rock","palm mute"],
+      "notes":"Sonido directo.",
+      "nivelDistorsion":"high-gain",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_if",
+    "title": "If",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[],
+      "amplificador":{"marca":"Fender","modelo":"Twin Reverb","configuracion":"clean"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"neck"},
+      "cadenaSenal":["guitarra","amplificador"],
+      "techniques":["fingerpicking","dinámica suave"],
+      "notes":"Muy limpio.",
+      "nivelDistorsion":"clean",
+      "esTocadoLimpio":true,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_make_you_feel_better",
+    "title": "Make You Feel Better",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"MXR Micro Amp","tipo":"boost","posicion":"leve"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"crunch ligero"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"middle"},
+      "cadenaSenal":["guitarra","MXR Micro Amp","amplificador"],
+      "techniques":["riff pop rock","arpegios"],
+      "notes":"Brillante.",
+      "nivelDistorsion":"edge",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_animal_bar",
+    "title": "Animal Bar",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Delay","tipo":"delay","posicion":"ambiente"}],
+      "amplificador":{"marca":"Fender","modelo":"Twin Reverb","configuracion":"clean"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"neck"},
+      "cadenaSenal":["guitarra","delay","amplificador"],
+      "techniques":["melodía","espacio"],
+      "notes":"Atmosférico.",
+      "nivelDistorsion":"clean",
+      "esTocadoLimpio":true,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_so_much_i",
+    "title": "So Much I",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"MXR Micro Amp","tipo":"boost","posicion":"activo"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"crunch"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"bridge"},
+      "cadenaSenal":["guitarra","MXR Micro Amp","amplificador"],
+      "techniques":["riff funk","groove"],
+      "notes":"Rítmico.",
+      "nivelDistorsion":"crunch",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_storm_in_a_teacup",
+    "title": "Storm in a Teacup",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Ibanez WH-10 Wah","tipo":"wah","posicion":"activo"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"crunch"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"bridge"},
+      "cadenaSenal":["guitarra","Ibanez WH-10 Wah","amplificador"],
+      "techniques":["riff funk","wah dinámico"],
+      "notes":"Groove.",
+      "nivelDistorsion":"crunch",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_we_believe",
+    "title": "We Believe",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Delay","tipo":"delay","posicion":"ambiente"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"clean-crunch"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"middle"},
+      "cadenaSenal":["guitarra","delay","amplificador"],
+      "techniques":["riff limpio","dinámica"],
+      "notes":"Textura.",
+      "nivelDistorsion":"edge",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_turn_it_again",
+    "title": "Turn It Again",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Boss DS-2 Turbo Distortion","tipo":"distortion","posicion":"principal"}],
+      "amplificador":{"marca":"Marshall","modelo":"Jubilee","configuracion":"gain alto"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"bridge"},
+      "cadenaSenal":["guitarra","Boss DS-2","amplificador"],
+      "techniques":["riff complejo","solo largo"],
+      "notes":"Capas de guitarra.",
+      "nivelDistorsion":"high-gain",
+      "esTocadoLimpio":false,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
+    }
+  },
+
+  {
+    "musicBrainzId": "manual_death_of_a_martian",
+    "title": "Death of a Martian",
+    "artist": "Red Hot Chili Peppers",
+    "coverUrl": "...",
+    "toneResearch": {
+      "equipment":[{"nombre":"Delay","tipo":"delay","posicion":"ambiente"}],
+      "amplificador":{"marca":"Fender","modelo":"Twin Reverb","configuracion":"clean"},
+      "guitarra":{"marca":"Fender","modelo":"Stratocaster","pastillas":"neck"},
+      "cadenaSenal":["guitarra","delay","amplificador"],
+      "techniques":["melodía final","ambiente"],
+      "notes":"Cierre atmosférico.",
+      "nivelDistorsion":"clean",
+      "esTocadoLimpio":true,
+      "researchedAt":"2026-03-23T00:00:00.000Z"
     }
   }
 ];
+
 
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
