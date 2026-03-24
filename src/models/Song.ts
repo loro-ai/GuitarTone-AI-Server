@@ -16,6 +16,13 @@ export interface ISong {
     notes: string;
     nivelDistorsion?: string;
     esTocadoLimpio?: boolean;
+    estructura?: Array<{
+      seccion: string;
+      dinamica?: string;
+      nivel_distorsion?: string;
+      efectos_clave?: string[];
+      tecnica?: string;
+    }>;
     researchedAt: Date;
   };
   createdAt: Date;
@@ -52,6 +59,15 @@ const songSchema = new mongoose.Schema<ISong>(
       notes: String,
       nivelDistorsion: String,
       esTocadoLimpio: Boolean,
+      estructura: [
+        {
+          seccion: String,
+          dinamica: String,
+          nivel_distorsion: String,
+          efectos_clave: [String],
+          tecnica: String,
+        },
+      ],
       researchedAt: Date,
     },
   },

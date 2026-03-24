@@ -31,6 +31,15 @@ const songSchema = new mongoose.Schema({
     notes: String,
     nivelDistorsion: String,
     esTocadoLimpio: Boolean,
+    estructura: [
+      {
+        seccion: String,
+        dinamica: String,
+        nivel_distorsion: String,
+        efectos_clave: [String],
+        tecnica: String,
+      },
+    ],
     researchedAt: Date,
   },
 }, { timestamps: true });
@@ -58,6 +67,12 @@ const songs = [
       "notes":"Distorsión principal del DS-2.",
       "nivelDistorsion":"high-gain",
       "esTocadoLimpio":false,
+      "estructura":[
+        {"seccion":"intro","dinamica":"mf","nivel_distorsion":"crunch","efectos_clave":["Boss DS-2"],"tecnica":"riff palm mute"},
+        {"seccion":"verso","dinamica":"mf","nivel_distorsion":"crunch","efectos_clave":["Boss DS-2"],"tecnica":"riff rock"},
+        {"seccion":"coro","dinamica":"f","nivel_distorsion":"high-gain","efectos_clave":["Boss DS-2","MXR Micro Amp"],"tecnica":"power chords abiertos"},
+        {"seccion":"solo","dinamica":"ff","nivel_distorsion":"high-gain","efectos_clave":["Boss DS-2","Ibanez WH-10 Wah"],"tecnica":"bends amplios con wah"}
+      ],
       "researchedAt":"2026-03-23T00:00:00.000Z"
     }
   },
@@ -78,6 +93,10 @@ const songs = [
       "notes":"Compresión clave.",
       "nivelDistorsion":"clean",
       "esTocadoLimpio":true,
+      "estructura":[
+        {"seccion":"verso","dinamica":"mf","nivel_distorsion":"clean","efectos_clave":["compressor","Boss CE-1"],"tecnica":"alternate picking continuo"},
+        {"seccion":"coro","dinamica":"f","nivel_distorsion":"clean","efectos_clave":["compressor","Boss CE-1"],"tecnica":"arpegios rapidos mas intensos"}
+      ],
       "researchedAt":"2026-03-23T00:00:00.000Z"
     }
   },
@@ -220,6 +239,11 @@ const songs = [
       "notes":"Mucho espacio.",
       "nivelDistorsion":"clean",
       "esTocadoLimpio":true,
+      "estructura":[
+        {"seccion":"verso","dinamica":"p","nivel_distorsion":"clean","efectos_clave":["delay"],"tecnica":"fraseo lento"},
+        {"seccion":"coro","dinamica":"mf","nivel_distorsion":"light-crunch","efectos_clave":["delay"],"tecnica":"strumming abierto"},
+        {"seccion":"outro","dinamica":"f","nivel_distorsion":"crunch","efectos_clave":["delay"],"tecnica":"crescendo final"}
+      ],
       "researchedAt":"2026-03-23T00:00:00.000Z"
     }
   },
@@ -243,6 +267,12 @@ const songs = [
       "notes":"Gran dinámica.",
       "nivelDistorsion":"crunch",
       "esTocadoLimpio":false,
+      "estructura":[
+        {"seccion":"intro","dinamica":"p","nivel_distorsion":"clean","efectos_clave":["delay"],"tecnica":"arpegios limpios"},
+        {"seccion":"verso","dinamica":"mp","nivel_distorsion":"light-crunch","efectos_clave":["delay"],"tecnica":"strumming suave"},
+        {"seccion":"coro","dinamica":"f","nivel_distorsion":"crunch","efectos_clave":["Boss DS-2","delay"],"tecnica":"power chords"},
+        {"seccion":"solo","dinamica":"ff","nivel_distorsion":"high-gain","efectos_clave":["Boss DS-2","delay"],"tecnica":"solo emocional con feedback"}
+      ],
       "researchedAt":"2026-03-23T00:00:00.000Z"
     }
   },
@@ -477,6 +507,11 @@ const songs = [
       "notes":"Capas de guitarra.",
       "nivelDistorsion":"high-gain",
       "esTocadoLimpio":false,
+      "estructura":[
+        {"seccion":"intro","dinamica":"mf","nivel_distorsion":"crunch","efectos_clave":["Boss DS-2"],"tecnica":"riff complejo"},
+        {"seccion":"verso","dinamica":"f","nivel_distorsion":"high-gain","efectos_clave":["Boss DS-2"],"tecnica":"riff agresivo"},
+        {"seccion":"solo","dinamica":"ff","nivel_distorsion":"high-gain","efectos_clave":["Boss DS-2"],"tecnica":"solo largo multi-capa"}
+      ],
       "researchedAt":"2026-03-23T00:00:00.000Z"
     }
   },

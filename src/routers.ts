@@ -248,6 +248,7 @@ REGLAS CRÍTICAS — NUNCA violar:
 - NO inventes efectos. Si no encuentras información verificada, indica "sin información verificada"
 - Distingue entre el tono del artista EN ESA CANCIÓN ESPECÍFICA vs su tono general
 - Muchas canciones acústicas/country/folk son 100% clean — no asumas distorsión
+- ANALIZA LA ESTRUCTURA REAL DE LA CANCIÓN: identifica secciones (intro, verso, coro, puente, solo) y cómo cambia el tono en cada una
 
 Responde SOLO con este JSON (sin markdown):
 {
@@ -259,7 +260,18 @@ Responde SOLO con este JSON (sin markdown):
   "nivel_distorsion": "clean|light-crunch|crunch|high-gain|heavy",
   "es_tocado_limpio": true,
   "fuente_verificada": "URL o descripción de dónde se encontró la info",
-  "notas": "datos adicionales importantes sobre el tono (EQ, compresion, efectos clave)"
+  "notas": "datos adicionales importantes sobre el tono (EQ, compresion, efectos clave)",
+  "estructura": [
+    {
+      "seccion": "intro|verso|coro|pre-coro|estribillo|puente|bridge|solo|outro|ending|riff|interludio|interlude|breakdown|hook|refrain|climax",
+      "dinamica": "pp|p|mp|mf|f|ff",
+      "nivel_distorsion": "clean|light-crunch|crunch|high-gain|heavy",
+      "efectos_clave": ["nombre del efecto activo en esta seccion"],
+      "gain_relativo": 1,
+      "tecnica": "tecnica especifica de esta seccion",
+      "notas": "cambios tonales respecto a la seccion anterior"
+    }
+  ]
 }`;
 
       try {
@@ -285,6 +297,7 @@ Responde SOLO con este JSON (sin markdown):
           es_tocado_limpio?: boolean;
           fuente_verificada?: string;
           notas?: string;
+          estructura?: Array<{ seccion: string; dinamica?: string; nivel_distorsion?: string; efectos_clave?: string[]; gain_relativo?: number; tecnica?: string; notas?: string }>;
         }>(result.content);
 
         const toneResearch = {
@@ -296,6 +309,7 @@ Responde SOLO con este JSON (sin markdown):
           notes: researchData.notas || "",
           nivelDistorsion: researchData.nivel_distorsion,
           esTocadoLimpio: researchData.es_tocado_limpio,
+          estructura: Array.isArray(researchData.estructura) ? researchData.estructura : [],
           researchedAt: new Date(),
         };
 
@@ -349,6 +363,7 @@ REGLAS CRÍTICAS:
 - NO inventes efectos. Si no hay información verificada para un campo, usa null.
 - Documenta CADA pedal, procesador y efecto por separado en el array de efectos.
 - Incluye la posición en la cadena de señal si se conoce.
+- ANALIZA LA ESTRUCTURA REAL DE LA CANCIÓN: identifica secciones (intro, verso, coro, puente, solo) y cómo cambia el tono/dinámica en cada una.
 
 Responde SOLO con este JSON (sin markdown):
 {
@@ -376,7 +391,18 @@ Responde SOLO con este JSON (sin markdown):
   "nivel_distorsion": "clean|light-crunch|crunch|high-gain|heavy",
   "es_tocado_limpio": false,
   "fuente_verificada": "URL o descripción de la fuente consultada",
-  "notas": "Información adicional clave sobre el tono: afinación, configuración especial, detalles de EQ, etc."
+  "notas": "Información adicional clave sobre el tono: afinación, configuración especial, detalles de EQ, etc.",
+  "estructura": [
+    {
+      "seccion": "intro|verso|coro|pre-coro|estribillo|puente|bridge|solo|outro|ending|riff|interludio|interlude|breakdown|hook|refrain|climax",
+      "dinamica": "pp|p|mp|mf|f|ff",
+      "nivel_distorsion": "clean|light-crunch|crunch|high-gain|heavy",
+      "efectos_clave": ["nombre del efecto activo en esta seccion"],
+      "gain_relativo": 1,
+      "tecnica": "tecnica especifica en esta seccion (palm muting, strumming abierto, etc.)",
+      "notas": "cambios tonales respecto a la seccion anterior"
+    }
+  ]
 }`;
 
         try {
@@ -402,6 +428,7 @@ Responde SOLO con este JSON (sin markdown):
             es_tocado_limpio?: boolean;
             fuente_verificada?: string;
             notas?: string;
+            estructura?: Array<{ seccion: string; dinamica?: string; nivel_distorsion?: string; efectos_clave?: string[]; gain_relativo?: number; tecnica?: string; notas?: string }>;
           }>(result.content);
 
           toneResearch = {
@@ -413,6 +440,7 @@ Responde SOLO con este JSON (sin markdown):
             notes: researchData.notas || "",
             nivelDistorsion: researchData.nivel_distorsion,
             esTocadoLimpio: researchData.es_tocado_limpio,
+            estructura: Array.isArray(researchData.estructura) ? researchData.estructura : [],
             researchedAt: new Date(),
           };
 
@@ -430,6 +458,7 @@ Responde SOLO con este JSON (sin markdown):
             notes: "No se pudo investigar el tono. n8n generará presets basados solo en el equipo del usuario.",
             nivelDistorsion: undefined,
             esTocadoLimpio: undefined,
+            estructura: [],
             researchedAt: new Date(),
           };
         }
