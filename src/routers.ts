@@ -372,44 +372,65 @@ REGLAS CRÍTICAS:
 - NO inventes efectos. Si no hay información verificada para un campo, usa null.
 - Documenta CADA pedal, procesador y efecto por separado en el array de efectos.
 - Incluye la posición en la cadena de señal si se conoce.
-- ANALIZA LA ESTRUCTURA REAL DE LA CANCIÓN: identifica secciones (intro, verso, coro, puente, solo) y cómo cambia el tono/dinámica en cada una.
+- ANALIZA LA ESTRUCTURA REAL DE LA CANCIÓN sección por sección.
+- amp_reference es OBLIGATORIO: investiga el amp del artista y describe su carácter tonal + EQ base estimada (0-100).
+- song_structure es OBLIGATORIO: cada sección de la canción con intensidad (1-10), textura, efectos clave y ajuste de EQ relativo.
 
 Responde SOLO con este JSON (sin markdown):
 {
+  "amp_reference": {
+    "marca": "Marca exacta del amplificador",
+    "modelo": "Modelo exacto",
+    "caracter": "bright|dark|neutral",
+    "gain_base": 55,
+    "eq_base": { "bass": 50, "mid": 60, "treble": 65 },
+    "notes": "Notas sobre configuración del amp en esta canción"
+  },
+  "song_structure": [
+    {
+      "section": "intro|verso|coro|pre-coro|solo|bridge|outro|riff|breakdown",
+      "intensity": 5,
+      "texture": "clean|crunch|heavy",
+      "key_effects": ["nombre del efecto activo"],
+      "eq_adjust": { "bass": 50, "mid": 55, "treble": 60 },
+      "gain_delta": 0,
+      "technique": "tecnica especifica en esta seccion"
+    }
+  ],
   "efectos": [
     {
       "nombre": "Nombre exacto del pedal/efecto",
-      "marca": "Marca del fabricante",
+      "marca": "Marca",
       "modelo": "Modelo exacto",
       "tipo": "distorsion|overdrive|fuzz|reverb|delay|chorus|flanger|phaser|wah|comp|eq|boost|tremolo|vibrato|pitch|octave|clean",
-      "posicion": "número o descripción de posición en la cadena"
+      "posicion": "posición en la cadena"
     }
   ],
   "amplificador": {
     "marca": "Marca exacta",
     "modelo": "Modelo exacto",
-    "configuracion": "Descripción de EQ y ganancia usados en esta canción"
+    "configuracion": "Descripción de EQ y ganancia"
   },
   "guitarra": {
     "marca": "Marca exacta",
     "modelo": "Modelo exacto",
-    "pastillas": "Tipo de pastillas (single coil, humbucker, P90, etc.)"
+    "pastillas": "Tipo de pastillas"
   },
-  "cadena_senal": ["guitarra", "pedal1", "pedal2", "amplificador"],
-  "tecnica": "Descripción detallada de la técnica (fingerpicking, plectro duro/suave, slide, palm muting, etc.)",
+  "cadena_senal": ["guitarra", "pedal1", "amplificador"],
+  "tecnica": "Descripción de la técnica principal",
   "nivel_distorsion": "clean|light-crunch|crunch|high-gain|heavy",
   "es_tocado_limpio": false,
-  "fuente_verificada": "URL o descripción de la fuente consultada",
-  "notas": "Información adicional clave sobre el tono: afinación, configuración especial, detalles de EQ, etc.",
+  "fuente_verificada": "URL o fuente consultada",
+  "notas": "Información adicional",
   "estructura": [
     {
-      "seccion": "intro|verso|coro|pre-coro|estribillo|puente|bridge|solo|outro|ending|riff|interludio|interlude|breakdown|hook|refrain|climax",
+      "seccion": "intro|verso|coro|pre-coro|solo|bridge|outro|riff|breakdown",
       "dinamica": "pp|p|mp|mf|f|ff",
       "nivel_distorsion": "clean|light-crunch|crunch|high-gain|heavy",
-      "efectos_clave": ["nombre del efecto activo en esta seccion"],
+      "efectos_clave": ["efecto activo"],
       "gain_relativo": 1,
-      "tecnica": "tecnica especifica en esta seccion (palm muting, strumming abierto, etc.)",
-      "notas": "cambios tonales respecto a la seccion anterior"
+      "tecnica": "tecnica especifica",
+      "notas": "cambios tonales"
     }
   ]
 }`;
@@ -428,6 +449,8 @@ Responde SOLO con este JSON (sin markdown):
           });
 
           const researchData = parseJSON<{
+            amp_reference?: { marca: string; modelo: string; caracter: string; gain_base: number; eq_base: { bass: number; mid: number; treble: number }; notes: string };
+            song_structure?: Array<{ section: string; intensity: number; texture: string; key_effects: string[]; eq_adjust?: { bass: number; mid: number; treble: number }; gain_delta?: number; technique?: string }>;
             efectos?: Array<{ nombre: string; marca?: string; modelo?: string; tipo: string; posicion?: string }>;
             amplificador?: { marca?: string; modelo?: string; configuracion?: string };
             guitarra?: { marca?: string; modelo?: string; pastillas?: string };
@@ -441,6 +464,30 @@ Responde SOLO con este JSON (sin markdown):
           }>(result.content);
 
           toneResearch = {
+            // ── v2 campos ──
+            ampReference: researchData.amp_reference ? {
+              marca: researchData.amp_reference.marca || "",
+              modelo: researchData.amp_reference.modelo || "",
+              caracter: (researchData.amp_reference.caracter as "bright" | "dark" | "neutral") || "neutral",
+              gainBase: researchData.amp_reference.gain_base ?? 50,
+              eqBase: researchData.amp_reference.eq_base || { bass: 50, mid: 50, treble: 50 },
+              notes: researchData.amp_reference.notes || "",
+            } : undefined,
+            songStructure: Array.isArray(researchData.song_structure) ? researchData.song_structure.map(s => ({
+              section: s.section as any,
+              intensity: s.intensity ?? 5,
+              texture: (s.texture as "clean" | "crunch" | "heavy") || "crunch",
+              keyEffects: s.key_effects || [],
+              eqAdjust: s.eq_adjust,
+              gainDelta: s.gain_delta,
+              technique: s.technique,
+            })) : undefined,
+            baseTone: {
+              nivelDistorsion: researchData.nivel_distorsion || "crunch",
+              esTocadoLimpio: researchData.es_tocado_limpio ?? false,
+            },
+
+            // ── legacy campos ──
             equipment: researchData.efectos || [],
             amplificador: researchData.amplificador || {},
             guitarra: researchData.guitarra || {},
