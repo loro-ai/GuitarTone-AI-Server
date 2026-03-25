@@ -8,6 +8,7 @@ import { invokeLLM, parseJSON } from "./_core/llm";
 import { hashPassword, verifyPassword, createSessionToken } from "./_core/sdk";
 import * as db from "./db";
 import { ENV } from "./_core/env";
+import { Gear } from "./models/Gear";
 
 // ─── Tipos para integración n8n ───────────────────────────────────────────────
 
@@ -624,7 +625,12 @@ const gearRouter = router({
 
         if (!response.ok) return { success: false, specs: null };
         const data = await response.json() as { success: boolean; specs: Record<string, unknown> };
-        return { success: true, specs: data.specs || null };
+        const specs = data.specs || null;
+        // Persistir specs en MongoDB para que generatePreset tenga procId
+        if (specs && input.gearId) {
+          await Gear.findByIdAndUpdate(input.gearId, { specs });
+        }
+        return { success: true, specs };
       } catch {
         return { success: false, specs: null };
       }
