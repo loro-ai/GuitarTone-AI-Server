@@ -603,7 +603,7 @@ const gearRouter = router({
     }))
     .query(async ({ input }) => {
       const N8N_BASE = (ENV.n8nWebhookUrl || ENV.n8nWebhookUrlV2)?.replace(/\/webhook\/.*$/, '');
-      const webhookUrl = N8N_BASE ? `${N8N_BASE}/webhook/guitartone-gear-specs` : undefined;
+      const webhookUrl = N8N_BASE ? `${N8N_BASE}/webhook/guitartone-gear-specsv2` : undefined;
       if (!webhookUrl) return { success: false, specs: null };
 
       try {
