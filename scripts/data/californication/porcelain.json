@@ -1,0 +1,22 @@
+{
+  "musicBrainzId": "californication_porcelain",
+  "title": "Porcelain",
+  "artist": "Red Hot Chili Peppers",
+  "coverUrl": "...",
+  "toneResearch": {
+    "equipment": [],
+    "amplificador": {"marca": "Fender", "modelo": "Showman", "configuracion": "clean total"},
+    "guitarra": {"marca": "Gretsch", "modelo": "White Falcon 1955", "pastillas": "humbucker — tono calido"},
+    "cadenaSenal": ["guitarra", "amplificador"],
+    "techniques": ["fingerpicking suave", "arpegios delicados", "dinamica pp-p"],
+    "notes": "Track más minimalista del álbum. Posiblemente Gretsch White Falcon por el tono cálido. Sin efectos. Reverb de estudio.",
+    "descripcion_tono": "Delicado y atmosferico. Clean total, picking suave, sin ningun efecto. El track mas subdued del album.",
+    "tecnica": "Fingerpicking gentil, arpegios sparse",
+    "nivelDistorsion": "clean",
+    "esTocadoLimpio": true,
+    "estructura": [
+      {"seccion": "verso", "dinamica": "pp", "nivel_distorsion": "clean", "efectos_clave": [], "tecnica": "fingerpicking delicado y sparse"}
+    ],
+    "researchedAt": "2026-03-25T00:00:00.000Z"
+  }
+}

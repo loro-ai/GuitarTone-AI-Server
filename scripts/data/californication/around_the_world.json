@@ -1,0 +1,28 @@
+{
+  "musicBrainzId": "californication_around_the_world",
+  "title": "Around the World",
+  "artist": "Red Hot Chili Peppers",
+  "coverUrl": "...",
+  "toneResearch": {
+    "equipment": [
+      {"nombre": "Boss DS-2 Turbo Distortion", "tipo": "distortion", "posicion": "principal"},
+      {"nombre": "Ibanez WH-10 Wah", "tipo": "wah", "posicion": "riff con wah fijo/swept"}
+    ],
+    "amplificador": {"marca": "Marshall", "modelo": "Major 200W", "configuracion": "crunch alto, master arriba"},
+    "guitarra": {"marca": "Fender", "modelo": "Stratocaster 1962", "pastillas": "single coil"},
+    "cadenaSenal": ["guitarra", "Ibanez WH-10 Wah", "Boss DS-2", "amplificador"],
+    "techniques": ["funk riffing", "ghost notes", "staccato picking", "wah sweep en solo"],
+    "notes": "Riff principal con wah en posición fija. DS-2 Mode II para drive. Solo agresivo con wah sweep y bends.",
+    "descripcion_tono": "Funk-rock agresivo con wah nasal y crunch tight. Coro más abierto y saturado.",
+    "tecnica": "Strumming percusivo con ghost notes, single-note funk lines",
+    "nivelDistorsion": "crunch",
+    "esTocadoLimpio": false,
+    "estructura": [
+      {"seccion": "intro", "dinamica": "f", "nivel_distorsion": "crunch", "efectos_clave": ["Boss DS-2", "Ibanez WH-10 Wah"], "tecnica": "riff funk con wah fijo"},
+      {"seccion": "verso", "dinamica": "mf", "nivel_distorsion": "crunch", "efectos_clave": ["Boss DS-2", "Ibanez WH-10 Wah"], "tecnica": "staccato funk picking con ghost notes"},
+      {"seccion": "coro", "dinamica": "f", "nivel_distorsion": "high-gain", "efectos_clave": ["Boss DS-2"], "tecnica": "power chords abiertos, strumming agresivo"},
+      {"seccion": "solo", "dinamica": "ff", "nivel_distorsion": "high-gain", "efectos_clave": ["Boss DS-2", "Ibanez WH-10 Wah"], "tecnica": "bends agresivos con wah sweep"}
+    ],
+    "researchedAt": "2026-03-25T00:00:00.000Z"
+  }
+}

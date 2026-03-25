@@ -1,0 +1,27 @@
+{
+  "musicBrainzId": "californication_californication",
+  "title": "Californication",
+  "artist": "Red Hot Chili Peppers",
+  "coverUrl": "...",
+  "toneResearch": {
+    "equipment": [
+      {"nombre": "Boss CE-1 Chorus Ensemble", "tipo": "chorus", "posicion": "sutil en clean"},
+      {"nombre": "Boss DS-2 Turbo Distortion", "tipo": "distortion", "posicion": "solo/outro — gain bajo"}
+    ],
+    "amplificador": {"marca": "Fender", "modelo": "Showman", "configuracion": "clean, mínimo breakup"},
+    "guitarra": {"marca": "Fender", "modelo": "Stratocaster 1962", "pastillas": "single coil — neck/middle"},
+    "cadenaSenal": ["guitarra", "Boss CE-1", "Boss DS-2", "amplificador"],
+    "techniques": ["arpegios two-string pattern", "strumming abierto", "solo melodico con sustain"],
+    "notes": "Arpegios icónicos limpios en verso. Coro con acordes strummed. Solo final con leve drive y bends emotivos.",
+    "descripcion_tono": "Clean cristalino con chorus sutil. Verso intimo con arpegios, coro abierto, outro con leve drive melodico.",
+    "tecnica": "Arpegios de dos cuerdas en verso, strumming en coro, bends en solo",
+    "nivelDistorsion": "clean",
+    "esTocadoLimpio": false,
+    "estructura": [
+      {"seccion": "verso", "dinamica": "p", "nivel_distorsion": "clean", "efectos_clave": ["Boss CE-1"], "tecnica": "arpegios two-string pattern iconicos"},
+      {"seccion": "coro", "dinamica": "mf", "nivel_distorsion": "clean", "efectos_clave": [], "tecnica": "acordes abiertos strummed"},
+      {"seccion": "solo", "dinamica": "f", "nivel_distorsion": "light-crunch", "efectos_clave": ["Boss DS-2"], "tecnica": "solo melodico con bends y sustain"}
+    ],
+    "researchedAt": "2026-03-25T00:00:00.000Z"
+  }
+}

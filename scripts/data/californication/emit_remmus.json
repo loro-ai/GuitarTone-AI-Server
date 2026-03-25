@@ -1,0 +1,25 @@
+{
+  "musicBrainzId": "californication_emit_remmus",
+  "title": "Emit Remmus",
+  "artist": "Red Hot Chili Peppers",
+  "coverUrl": "...",
+  "toneResearch": {
+    "equipment": [
+      {"nombre": "Boss DS-2 Turbo Distortion", "tipo": "distortion", "posicion": "principal"}
+    ],
+    "amplificador": {"marca": "Marshall", "modelo": "Major 200W", "configuracion": "crunch alto"},
+    "guitarra": {"marca": "Fender", "modelo": "Stratocaster 1962", "pastillas": "single coil"},
+    "cadenaSenal": ["guitarra", "Boss DS-2", "amplificador"],
+    "techniques": ["single-note riffing agresivo", "punk strumming rapido"],
+    "notes": "Punk-funk agresivo. DS-2 constante. Riff tight y comprimido. Una de las canciones mas agresivas del disco.",
+    "descripcion_tono": "Punk-rock crunch agresivo y tight. DS-2 prominente. Alta energia sostenida sin secciones limpias.",
+    "tecnica": "Alternate picking agresivo, punk strumming",
+    "nivelDistorsion": "crunch",
+    "esTocadoLimpio": false,
+    "estructura": [
+      {"seccion": "verso", "dinamica": "f", "nivel_distorsion": "crunch", "efectos_clave": ["Boss DS-2"], "tecnica": "single-note riffing agresivo"},
+      {"seccion": "coro", "dinamica": "ff", "nivel_distorsion": "high-gain", "efectos_clave": ["Boss DS-2"], "tecnica": "punk strumming abierto"}
+    ],
+    "researchedAt": "2026-03-25T00:00:00.000Z"
+  }
+}

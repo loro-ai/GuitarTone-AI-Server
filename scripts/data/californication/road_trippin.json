@@ -1,0 +1,23 @@
+{
+  "musicBrainzId": "californication_road_trippin",
+  "title": "Road Trippin'",
+  "artist": "Red Hot Chili Peppers",
+  "coverUrl": "...",
+  "toneResearch": {
+    "equipment": [],
+    "amplificador": {"marca": null, "modelo": null, "configuracion": "acustico directo"},
+    "guitarra": {"marca": "Guitarra acustica", "modelo": "nylon/clasica", "pastillas": "sin pastillas — acustica"},
+    "cadenaSenal": ["guitarra acustica"],
+    "techniques": ["fingerpicking", "arpegios clasicos"],
+    "notes": "100% acustico. Guitarra clasica/nylon fingerpicked. Sin efectos. Arreglo con cuerdas y trompeta (Flea). Track mas stripped-down del disco.",
+    "descripcion_tono": "Acustico puro. Fingerpicking en guitarra nylon. Sin amplificacion, sin efectos. Intimo y gentil.",
+    "tecnica": "Fingerpicking clasico, arpegios",
+    "nivelDistorsion": "clean",
+    "esTocadoLimpio": true,
+    "estructura": [
+      {"seccion": "verso", "dinamica": "p", "nivel_distorsion": "clean", "efectos_clave": [], "tecnica": "fingerpicking acustico gentil"},
+      {"seccion": "coro", "dinamica": "mp", "nivel_distorsion": "clean", "efectos_clave": [], "tecnica": "fingerpicking con mas intensidad, cuerdas entran"}
+    ],
+    "researchedAt": "2026-03-25T00:00:00.000Z"
+  }
+}

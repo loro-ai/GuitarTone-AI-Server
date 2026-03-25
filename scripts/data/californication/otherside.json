@@ -1,0 +1,26 @@
+{
+  "musicBrainzId": "californication_otherside",
+  "title": "Otherside",
+  "artist": "Red Hot Chili Peppers",
+  "coverUrl": "...",
+  "toneResearch": {
+    "equipment": [
+      {"nombre": "MXR Micro Amp", "tipo": "boost", "posicion": "coro — leve push"}
+    ],
+    "amplificador": {"marca": "Fender", "modelo": "Showman", "configuracion": "clean, reverb de estudio"},
+    "guitarra": {"marca": "Fender", "modelo": "Stratocaster 1962", "pastillas": "single coil"},
+    "cadenaSenal": ["guitarra", "MXR Micro Amp", "amplificador"],
+    "techniques": ["arpegios fingerpicked", "strumming abierto", "solo melodico"],
+    "notes": "Verso con arpegios limpios, coro con acordes abiertos y leve push del Micro Amp. Solo limpio y melodico.",
+    "descripcion_tono": "Atmosferico y melancolico. Arpegios limpios en verso, coro con leve crunch de amp breakup.",
+    "tecnica": "Fingerpicking/hybrid picking en verso, strumming en coro",
+    "nivelDistorsion": "light-crunch",
+    "esTocadoLimpio": false,
+    "estructura": [
+      {"seccion": "verso", "dinamica": "p", "nivel_distorsion": "clean", "efectos_clave": [], "tecnica": "arpegios fingerpicked sparse"},
+      {"seccion": "coro", "dinamica": "mf", "nivel_distorsion": "light-crunch", "efectos_clave": ["MXR Micro Amp"], "tecnica": "acordes abiertos strummed"},
+      {"seccion": "solo", "dinamica": "mf", "nivel_distorsion": "light-crunch", "efectos_clave": ["MXR Micro Amp"], "tecnica": "solo melodico restrained con bends"}
+    ],
+    "researchedAt": "2026-03-25T00:00:00.000Z"
+  }
+}

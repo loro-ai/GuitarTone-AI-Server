@@ -1,0 +1,28 @@
+{
+  "musicBrainzId": "californication_parallel_universe",
+  "title": "Parallel Universe",
+  "artist": "Red Hot Chili Peppers",
+  "coverUrl": "...",
+  "toneResearch": {
+    "equipment": [
+      {"nombre": "Boss DS-2 Turbo Distortion", "tipo": "distortion", "posicion": "chorus y solo"},
+      {"nombre": "Boss CE-1 Chorus Ensemble", "tipo": "chorus", "posicion": "clean sections sutil"}
+    ],
+    "amplificador": {"marca": "Marshall", "modelo": "Major 200W", "configuracion": "gain alto para secciones pesadas"},
+    "guitarra": {"marca": "Fender", "modelo": "Stratocaster 1962", "pastillas": "single coil — neck/middle clean, bridge heavy"},
+    "cadenaSenal": ["guitarra", "Boss CE-1", "Boss DS-2", "amplificador"],
+    "techniques": ["arpegios clean", "power chord strumming", "alternate picking rapido", "bends amplios", "vibrato agresivo"],
+    "notes": "Contraste extremo entre verso limpio y coro/solo pesadísimo. Solo más agresivo del álbum — DS-2 Mode II a fondo.",
+    "descripcion_tono": "Dinámico extremo: arpegios atmosféricos limpios explotan en wall of distortion. Solo shred con sustain masivo.",
+    "tecnica": "Arpegios fingerpicked en verso, power chords en coro, shred en solo",
+    "nivelDistorsion": "crunch",
+    "esTocadoLimpio": false,
+    "estructura": [
+      {"seccion": "intro", "dinamica": "p", "nivel_distorsion": "clean", "efectos_clave": ["Boss CE-1"], "tecnica": "arpegios limpios atmosfericos"},
+      {"seccion": "verso", "dinamica": "mp", "nivel_distorsion": "clean", "efectos_clave": ["Boss CE-1"], "tecnica": "clean picking delicado"},
+      {"seccion": "coro", "dinamica": "ff", "nivel_distorsion": "high-gain", "efectos_clave": ["Boss DS-2"], "tecnica": "power chord wall of sound"},
+      {"seccion": "solo", "dinamica": "ff", "nivel_distorsion": "heavy", "efectos_clave": ["Boss DS-2"], "tecnica": "alternate picking rapido, bends amplios, vibrato agresivo"}
+    ],
+    "researchedAt": "2026-03-25T00:00:00.000Z"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "musicBrainzId": "californication_scar_tissue",
+  "title": "Scar Tissue",
+  "artist": "Red Hot Chili Peppers",
+  "coverUrl": "...",
+  "toneResearch": {
+    "equipment": [],
+    "amplificador": {"marca": "Fender", "modelo": "Showman", "configuracion": "clean total, reverb de estudio"},
+    "guitarra": {"marca": "Fender", "modelo": "Stratocaster 1962", "pastillas": "single coil — neck pickup"},
+    "cadenaSenal": ["guitarra", "amplificador"],
+    "techniques": ["slide guitar", "single-note melodies", "vibrato con slide"],
+    "notes": "Slide guitar icónico. Strat neck pickup directo a amp limpio. Sin pedales. Tono desnudo y emotivo.",
+    "descripcion_tono": "Clean puro con slide. Neck pickup de Strat directo a Fender limpio. Warm, smooth, sin efectos.",
+    "tecnica": "Slide guitar en cuerdas agudas, single-note melodies",
+    "nivelDistorsion": "clean",
+    "esTocadoLimpio": true,
+    "estructura": [
+      {"seccion": "verso", "dinamica": "mp", "nivel_distorsion": "clean", "efectos_clave": [], "tecnica": "slide guitar melodico suave"},
+      {"seccion": "coro", "dinamica": "mf", "nivel_distorsion": "clean", "efectos_clave": [], "tecnica": "slide guitar con mas intensidad expresiva"},
+      {"seccion": "solo", "dinamica": "mf", "nivel_distorsion": "clean", "efectos_clave": [], "tecnica": "slide guitar con bends expresivos y vibrato"}
+    ],
+    "researchedAt": "2026-03-25T00:00:00.000Z"
+  }
+}

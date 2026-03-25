@@ -1,0 +1,27 @@
+{
+  "musicBrainzId": "californication_purple_stain",
+  "title": "Purple Stain",
+  "artist": "Red Hot Chili Peppers",
+  "coverUrl": "...",
+  "toneResearch": {
+    "equipment": [
+      {"nombre": "Boss DS-2 Turbo Distortion", "tipo": "distortion", "posicion": "principal"},
+      {"nombre": "Ibanez WH-10 Wah", "tipo": "wah", "posicion": "riff — tono filtrado"}
+    ],
+    "amplificador": {"marca": "Marshall", "modelo": "Major 200W", "configuracion": "crunch"},
+    "guitarra": {"marca": "Fender", "modelo": "Stratocaster 1962", "pastillas": "single coil"},
+    "cadenaSenal": ["guitarra", "Ibanez WH-10 Wah", "Boss DS-2", "amplificador"],
+    "techniques": ["funk syncopated riffing", "staccato chord stabs", "single-note percusivo"],
+    "notes": "Funk-rock con riff sincopado y crunch tight. Wah sutil da tono filtrado. Solo con mas sustain y drive.",
+    "descripcion_tono": "Funk crunch sincopado con toque de wah. Riff tight y percusivo. Solo mas saturado.",
+    "tecnica": "Syncopated staccato funk, chord stabs con single-note lines",
+    "nivelDistorsion": "crunch",
+    "esTocadoLimpio": false,
+    "estructura": [
+      {"seccion": "verso", "dinamica": "mf", "nivel_distorsion": "crunch", "efectos_clave": ["Boss DS-2", "Ibanez WH-10 Wah"], "tecnica": "funk riff sincopado con wah sutil"},
+      {"seccion": "coro", "dinamica": "f", "nivel_distorsion": "crunch", "efectos_clave": ["Boss DS-2"], "tecnica": "acordes abiertos con mas drive"},
+      {"seccion": "solo", "dinamica": "f", "nivel_distorsion": "high-gain", "efectos_clave": ["Boss DS-2"], "tecnica": "solo con sustain y bends"}
+    ],
+    "researchedAt": "2026-03-25T00:00:00.000Z"
+  }
+}

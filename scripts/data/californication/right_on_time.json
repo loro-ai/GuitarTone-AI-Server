@@ -1,0 +1,24 @@
+{
+  "musicBrainzId": "californication_right_on_time",
+  "title": "Right on Time",
+  "artist": "Red Hot Chili Peppers",
+  "coverUrl": "...",
+  "toneResearch": {
+    "equipment": [
+      {"nombre": "Boss DS-2 Turbo Distortion", "tipo": "distortion", "posicion": "constante"}
+    ],
+    "amplificador": {"marca": "Marshall", "modelo": "Major 200W", "configuracion": "crunch-high gain"},
+    "guitarra": {"marca": "Fender", "modelo": "Stratocaster 1962", "pastillas": "single coil"},
+    "cadenaSenal": ["guitarra", "Boss DS-2", "amplificador"],
+    "techniques": ["fast strumming", "power chords", "punk rock attack"],
+    "notes": "Track mas punk del album. DS-2 prominente. Strumming rapido y agresivo. Minima variacion dinamica — full throttle.",
+    "descripcion_tono": "Punk-rock a toda velocidad. DS-2 constante con crunch-high gain. Sin secciones limpias. Sonido mas punk del disco.",
+    "tecnica": "Fast punk strumming, power chords agresivos",
+    "nivelDistorsion": "high-gain",
+    "esTocadoLimpio": false,
+    "estructura": [
+      {"seccion": "riff", "dinamica": "ff", "nivel_distorsion": "high-gain", "efectos_clave": ["Boss DS-2"], "tecnica": "punk strumming rapido y power chords constantes"}
+    ],
+    "researchedAt": "2026-03-25T00:00:00.000Z"
+  }
+}

@@ -1,5 +1,11 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Definir el esquema de Song (igual que en la app)
 const songSchema = new mongoose.Schema({
@@ -535,6 +541,31 @@ const songs = [
   }
 ];
 
+// Cargar JSONs de carpetas en scripts/data/
+function loadSongsFromDataDir(dirName) {
+  const dirPath = path.join(__dirname, 'data', dirName);
+  if (!fs.existsSync(dirPath)) {
+    console.warn(`⚠️ Directorio no encontrado: ${dirPath}`);
+    return [];
+  }
+  const files = fs.readdirSync(dirPath).filter(f => f.endsWith('.json'));
+  const loaded = [];
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(path.join(dirPath, file), 'utf-8');
+      loaded.push(JSON.parse(content));
+    } catch (err) {
+      console.error(`❌ Error leyendo ${file}: ${err.message}`);
+    }
+  }
+  console.log(`📂 ${dirName}: ${loaded.length} canciones cargadas`);
+  return loaded;
+}
+
+// Agregar canciones de carpetas de datos
+const californicationSongs = loadSongsFromDataDir('californication');
+songs.push(...californicationSongs);
+
 
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -580,9 +611,9 @@ async function run() {
         needsUpdate = true;
       }
 
-      const existingResearched = existing.toneResearch?.researchedAt;
-      const newResearched = song.toneResearch?.researchedAt;
-      if ((!existingResearched && newResearched) || (newResearched && existingResearched && newResearched > existingResearched)) {
+      const existingResearched = existing.toneResearch?.researchedAt ? new Date(existing.toneResearch.researchedAt).getTime() : 0;
+      const newResearched = song.toneResearch?.researchedAt ? new Date(song.toneResearch.researchedAt).getTime() : 0;
+      if (newResearched >= existingResearched && newResearched > 0) {
         updateFields.toneResearch = song.toneResearch;
         needsUpdate = true;
       }

@@ -1,0 +1,27 @@
+{
+  "musicBrainzId": "californication_this_velvet_glove",
+  "title": "This Velvet Glove",
+  "artist": "Red Hot Chili Peppers",
+  "coverUrl": "...",
+  "toneResearch": {
+    "equipment": [
+      {"nombre": "Boss CE-1 Chorus Ensemble", "tipo": "chorus", "posicion": "verso — sutil"},
+      {"nombre": "MXR Micro Amp", "tipo": "boost", "posicion": "coro/solo — leve push"}
+    ],
+    "amplificador": {"marca": "Fender", "modelo": "Showman", "configuracion": "clean con leve breakup en coro"},
+    "guitarra": {"marca": "Fender", "modelo": "Stratocaster 1962", "pastillas": "single coil"},
+    "cadenaSenal": ["guitarra", "Boss CE-1", "MXR Micro Amp", "amplificador"],
+    "techniques": ["arpegios clean", "strumming en coro", "solo melodico fluido"],
+    "notes": "Verso delicado con chorus sutil. Coro mas lleno con boost. Solo emocional con tono calido y leve overdrive.",
+    "descripcion_tono": "Dinamico y emotivo. Clean con chorus en verso, leve crunch en coro, solo calido con sustain.",
+    "tecnica": "Arpegios clean en verso, strumming en coro, solo fluido",
+    "nivelDistorsion": "light-crunch",
+    "esTocadoLimpio": false,
+    "estructura": [
+      {"seccion": "verso", "dinamica": "p", "nivel_distorsion": "clean", "efectos_clave": ["Boss CE-1"], "tecnica": "arpegios limpios delicados con chorus"},
+      {"seccion": "coro", "dinamica": "mf", "nivel_distorsion": "light-crunch", "efectos_clave": ["MXR Micro Amp"], "tecnica": "acordes strummed con mas cuerpo"},
+      {"seccion": "solo", "dinamica": "f", "nivel_distorsion": "light-crunch", "efectos_clave": ["MXR Micro Amp"], "tecnica": "solo melodico fluido con bends calidos"}
+    ],
+    "researchedAt": "2026-03-25T00:00:00.000Z"
+  }
+}
