@@ -19,6 +19,12 @@ type GearConfigRaw = {
   parametros: Record<string, unknown>;
 };
 
+type AmpPresetGlobal = {
+  AMP?: { algoritmo: string; P1?: number; P2?: number; P3?: number; P4?: number };
+  CAB?: { algoritmo: string; P1?: number };
+  NS?: { algoritmo: string; P1?: number };
+};
+
 type N8nPresetResponse = {
   success: boolean;
   configuracion_base: GearConfigRaw[];
@@ -34,7 +40,9 @@ type N8nPresetResponse = {
     configuracion: GearConfigRaw[];
     nota_tecnica?: string;
     consejos?: string[];
+    system_params?: Record<string, unknown>;
   }>;
+  ampPresetGlobal?: AmpPresetGlobal | null;
   advertencia?: string;
   error?: string;
 };
@@ -550,6 +558,7 @@ Responde SOLO con este JSON (sin markdown):
         preset,
         toneResearch,
         songDbId,
+        ampPresetGlobal: presetsData.ampPresetGlobal || null,
       };
     }),
 });
