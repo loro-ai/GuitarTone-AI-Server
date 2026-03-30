@@ -9,6 +9,7 @@ import { hashPassword, verifyPassword, createSessionToken } from "./_core/sdk";
 import * as db from "./db";
 import { ENV } from "./_core/env";
 import { Gear } from "./models/Gear";
+const { verifyPresetFlow } = require("./utils/verifyPresetFlow");
 
 // ─── Tipos para integración n8n ───────────────────────────────────────────────
 
@@ -20,7 +21,13 @@ type GearConfigRaw = {
 };
 
 type AmpPresetGlobal = {
-  AMP?: { algoritmo: string; P1?: number; P2?: number; P3?: number; P4?: number };
+  AMP?: {
+    algoritmo: string;
+    P1?: number;
+    P2?: number;
+    P3?: number;
+    P4?: number;
+  };
   CAB?: { algoritmo: string; P1?: number };
   NS?: { algoritmo: string; P1?: number };
 };
@@ -58,11 +65,15 @@ async function callN8nPresetGenerator(payload: {
   const webhookUrl = ENV.n8nWebhookUrlV2 || ENV.n8nWebhookUrl;
 
   if (!webhookUrl) {
-    console.warn("[n8n] N8N_WEBHOOK_URL_V2 y N8N_WEBHOOK_URL no configurados — usando fallback OpenAI directo");
+    console.warn(
+      "[n8n] N8N_WEBHOOK_URL_V2 y N8N_WEBHOOK_URL no configurados — usando fallback OpenAI directo",
+    );
     throw new Error("N8N_FALLBACK");
   }
 
-  console.log(`[n8n] Usando ${ENV.n8nWebhookUrlV2 ? "Orchestrator v2" : "Preset Generator v1"}: ${webhookUrl}`);
+  console.log(
+    `[n8n] Usando ${ENV.n8nWebhookUrlV2 ? "Orchestrator v2" : "Preset Generator v1"}: ${webhookUrl}`,
+  );
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 90_000);
@@ -80,25 +91,33 @@ async function callN8nPresetGenerator(payload: {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "sin detalle");
-      throw new Error(`n8n respondió con status ${response.status}: ${errorText}`);
+      throw new Error(
+        `n8n respondió con status ${response.status}: ${errorText}`,
+      );
     }
 
-    const data = await response.json() as N8nPresetResponse;
+    const data = (await response.json()) as N8nPresetResponse;
 
     if (!data.success) {
-      throw new Error(`n8n reportó error: ${data.error || "error desconocido"}`);
+      throw new Error(
+        `n8n reportó error: ${data.error || "error desconocido"}`,
+      );
     }
 
     if (!data.presetsData) {
       throw new Error("n8n retornó respuesta sin estructura válida");
     }
-    if (data.presetsData.length === 0 && (!data.configuracion_base || data.configuracion_base.length === 0)) {
+    if (
+      data.presetsData.length === 0 &&
+      (!data.configuracion_base || data.configuracion_base.length === 0)
+    ) {
       throw new Error("n8n retornó presets y configuración base vacíos");
     }
 
-    console.log(`[n8n] Presets generados: ${data.presetsData.length} sección(es) — songDbId: ${payload.songDbId}`);
+    console.log(
+      `[n8n] Presets generados: ${data.presetsData.length} sección(es) — songDbId: ${payload.songDbId}`,
+    );
     return data;
-
   } catch (err) {
     if ((err as Error).name === "AbortError") {
       throw new Error("n8n timeout: generación superó 90 segundos");
@@ -107,6 +126,106 @@ async function callN8nPresetGenerator(payload: {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+// ─── Core: n8n + fallback + verify ───────────────────────────────────────────
+
+async function generatePresetsCore(params: {
+  song: import("./models/Song").ISong;
+  gear: import("./models/Gear").IGear[];
+  userId: string;
+  songDbId: string;
+}): Promise<{
+  presetsData: N8nPresetResponse;
+  verification: { valid: boolean; errors: string[]; warnings: string[] };
+}> {
+  const { song, gear, userId, songDbId } = params;
+
+  let presetsData: N8nPresetResponse;
+
+  try {
+    presetsData = await callN8nPresetGenerator({ song, gear, userId, songDbId });
+  } catch (n8nError) {
+    if ((n8nError as Error).message === "N8N_FALLBACK") {
+      console.warn("[generatePresetsCore] Fallback OpenAI — configurar N8N_WEBHOOK_URL");
+      const tr = song.toneResearch;
+      const toneCtx = tr
+        ? [
+            `GANANCIA: ${tr.nivelDistorsion ?? "no especificado"}`,
+            `LIMPIO: ${tr.esTocadoLimpio ? "SÍ — DRIVE OFF + GAIN ≤ 3" : "No"}`,
+            `CADENA: ${tr.cadenaSenal?.join(" → ") || "no especificada"}`,
+            `AMP: ${tr.amplificador ? `${(tr.amplificador as any).marca ?? ""} ${(tr.amplificador as any).modelo ?? ""}`.trim() : "no especificado"}`,
+            `NOTAS: ${tr.notes || "ninguna"}`,
+          ].join("\n")
+        : "Sin datos.";
+      const gearIdMap: Record<string, string> = {};
+      gear.forEach((g, idx) => {
+        gearIdMap[`equipo_${idx + 1}`] = String(g._id);
+      });
+      const mapId = (c: GearConfigRaw) => ({
+        ...c,
+        gearId: gearIdMap[c.gearId] ?? c.gearId,
+      });
+      const staticGear = gear.filter((g) => g.type === "amplificador" || g.type === "guitarra");
+      const dynamicGear = gear.filter((g) => g.type !== "amplificador" && g.type !== "guitarra");
+      const staticList = staticGear.map((g) => `equipo_${gear.indexOf(g) + 1} = ${g.brand || ""} ${g.model || ""} (${g.type})`).join(", ");
+      const dynamicList = dynamicGear.map((g) => `equipo_${gear.indexOf(g) + 1} = ${g.brand || ""} ${g.model || ""} (${g.type})`).join(", ");
+      const fallbackPrompt = `Eres un técnico de sonido experto. Genera presets COMPLETOS con valores EXACTOS.\nCANCIÓN: ${song.title} — ${song.artist}\nTONO:\n${toneCtx}\nEQUIPO:\n${gear.map((g, i) => `[EQUIPO ${i + 1}] gearId:equipo_${i + 1} | ${g.brand} ${g.model} | type:${g.type}`).join("\n")}\nREGLA: AMPLIFICADORES/GUITARRAS → configuracion_base. PEDALERAS → presetsData.\nEstático: ${staticList || "ninguno"} | Dinámico: ${dynamicList || "ninguno"}\nMÁXIMO 3 presets. Nombres "A0","A1","A2". Valores numéricos. Si esTocadoLimpio=true: DRIVE OFF.\nResponde SOLO con JSON:\n{"configuracion_base":[],"presets":[],"advertencia":null}`;
+      const fbResult = await invokeLLM({
+        messages: [
+          { role: "system", content: fallbackPrompt },
+          { role: "user", content: `Genera presets para "${song.title}" de ${song.artist}.` },
+        ],
+        responseFormat: { type: "json" },
+        useWebSearch: false,
+      });
+      const fbData = parseJSON<{
+        configuracion_base?: GearConfigRaw[];
+        presets: Array<{
+          nombre: string;
+          momento_cancion: string;
+          descripcion: string;
+          configuracion: GearConfigRaw[];
+          nota_tecnica?: string;
+          consejos?: string[];
+        }>;
+        advertencia?: string;
+      }>(fbResult.content);
+      presetsData = {
+        success: true,
+        configuracion_base: (fbData.configuracion_base || []).map(mapId),
+        presetsData: (fbData.presets || []).map((p) => ({
+          ...p,
+          configuracion: (p.configuracion || []).map(mapId),
+        })),
+        advertencia: fbData.advertencia,
+      };
+    } else {
+      throw n8nError;
+    }
+  }
+
+  // Verificación automática
+  let verification = verifyPresetFlow(presetsData);
+
+  if (!verification.valid) {
+    console.warn(`[generatePresetsCore] Verificación falló — reintentando. Errores: ${verification.errors.join("; ")}`);
+    try {
+      presetsData = await callN8nPresetGenerator({ song, gear, userId, songDbId });
+      verification = verifyPresetFlow(presetsData);
+      if (!verification.valid) {
+        console.error(`[generatePresetsCore] Reintento falló. Errores: ${verification.errors.join("; ")}`);
+      }
+    } catch (retryErr) {
+      console.error("[generatePresetsCore] Reintento lanzó error:", retryErr);
+    }
+  }
+
+  if (verification.warnings.length > 0) {
+    console.warn(`[generatePresetsCore] Warnings: ${verification.warnings.join("; ")}`);
+  }
+
+  return { presetsData, verification };
 }
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -146,7 +265,10 @@ type DeezerTrack = {
   album: { title: string; cover_medium?: string };
 };
 
-async function searchDeezer(title: string, artist: string): Promise<DeezerTrack[]> {
+async function searchDeezer(
+  title: string,
+  artist: string,
+): Promise<DeezerTrack[]> {
   try {
     const url = new URL("https://api.deezer.com/search");
     url.searchParams.set("q", `${title} ${artist}`);
@@ -182,21 +304,26 @@ const songsRouter = router({
     if (deezerResults.length === 0) return [];
 
     // 2. Para cada resultado, verificar si ya existe en la BD (sin crearla)
-    const enriched = await Promise.all(deezerResults.map(async (r) => {
-      const existing = await db.getSongByTitleAndArtist(r.title, r.artist.name);
-      return {
-        id: String(r.id),
-        musicBrainzId: String(r.id),
-        title: r.title,
-        artist: r.artist.name,
-        coverUrl: r.album.cover_medium,
-        hasToneResearch: !!existing?.toneResearch?.researchedAt,
-      };
-    }));
+    const enriched = await Promise.all(
+      deezerResults.map(async (r) => {
+        const existing = await db.getSongByTitleAndArtist(
+          r.title,
+          r.artist.name,
+        );
+        return {
+          id: String(r.id),
+          musicBrainzId: String(r.id),
+          title: r.title,
+          artist: r.artist.name,
+          coverUrl: r.album.cover_medium,
+          hasToneResearch: !!existing?.toneResearch?.researchedAt,
+        };
+      }),
+    );
 
     // 3. Opcional: eliminar duplicados por título+artista si Deezer devolvió varios
     //    (aunque la API no suele hacerlo, por seguridad)
-    const unique = new Map<string, typeof enriched[0]>();
+    const unique = new Map<string, (typeof enriched)[0]>();
     for (const item of enriched) {
       const key = `${item.title}|${item.artist}`.toLowerCase();
       if (!unique.has(key)) unique.set(key, item);
@@ -218,14 +345,14 @@ const songsRouter = router({
       };
     }),
 
-  researchTone: publicProcedure
+  researchTone: protectedProcedure
     .input(
       z.object({
         musicBrainzId: z.string(),
         title: z.string(),
         artist: z.string(),
         coverUrl: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       // Crear/obtener la canción (busca primero por título+artista)
@@ -239,7 +366,11 @@ const songsRouter = router({
       // Si ya tiene investigación, retornar desde cache
       if (song.toneResearch?.researchedAt) {
         console.log("[researchTone] Cache hit para:", input.title);
-        return { success: true, data: song.toneResearch, songDbId: String(song._id) };
+        return {
+          success: true,
+          data: song.toneResearch,
+          songDbId: String(song._id),
+        };
       }
 
       const systemPrompt = `Eres un experto en gear de guitarra con acceso a internet.
@@ -297,8 +428,18 @@ Responde SOLO con este JSON (sin markdown):
         });
 
         const researchData = parseJSON<{
-          efectos?: Array<{ nombre: string; marca?: string; modelo?: string; tipo: string; posicion?: string }>;
-          amplificador?: { marca?: string; modelo?: string; configuracion?: string };
+          efectos?: Array<{
+            nombre: string;
+            marca?: string;
+            modelo?: string;
+            tipo: string;
+            posicion?: string;
+          }>;
+          amplificador?: {
+            marca?: string;
+            modelo?: string;
+            configuracion?: string;
+          };
           guitarra?: { marca?: string; modelo?: string; pastillas?: string };
           cadena_senal?: string[];
           tecnica?: string;
@@ -306,7 +447,15 @@ Responde SOLO con este JSON (sin markdown):
           es_tocado_limpio?: boolean;
           fuente_verificada?: string;
           notas?: string;
-          estructura?: Array<{ seccion: string; dinamica?: string; nivel_distorsion?: string; efectos_clave?: string[]; gain_relativo?: number; tecnica?: string; notas?: string }>;
+          estructura?: Array<{
+            seccion: string;
+            dinamica?: string;
+            nivel_distorsion?: string;
+            efectos_clave?: string[];
+            gain_relativo?: number;
+            tecnica?: string;
+            notas?: string;
+          }>;
         }>(result.content);
 
         const toneResearch = {
@@ -318,7 +467,9 @@ Responde SOLO con este JSON (sin markdown):
           notes: researchData.notas || "",
           nivelDistorsion: researchData.nivel_distorsion,
           esTocadoLimpio: researchData.es_tocado_limpio,
-          estructura: Array.isArray(researchData.estructura) ? researchData.estructura : [],
+          estructura: Array.isArray(researchData.estructura)
+            ? researchData.estructura
+            : [],
           researchedAt: new Date(),
         };
 
@@ -331,13 +482,18 @@ Responde SOLO con este JSON (sin markdown):
         };
       } catch (error) {
         console.error("[LLM] researchTone error:", error);
-        return { success: false, error: "Error investigando el tono", songDbId: String(song._id) };
+        return {
+          success: false,
+          error: "Error investigando el tono",
+          songDbId: String(song._id),
+        };
       }
     }),
 
-  generatePreset: publicProcedure
+  generatePreset: protectedProcedure
     .input(generatePresetFromSongSchema)
     .mutation(async ({ ctx, input }) => {
+      const userId = String(ctx.user._id || ctx.user.openId);
       // ── Paso 1: Crear o recuperar la canción ──────────────────────────
       const song = await db.createOrGetSong({
         musicBrainzId: input.musicBrainzId,
@@ -354,7 +510,9 @@ Responde SOLO con este JSON (sin markdown):
         : null;
 
       if (!toneResearch) {
-        console.log(`[generatePreset] Investigando gear del artista: ${input.artist} — ${input.title}`);
+        console.log(
+          `[generatePreset] Investigando gear del artista: ${input.artist} — ${input.title}`,
+        );
 
         const researchSystemPrompt = `Eres un experto en gear de guitarra eléctrica con acceso a internet.
 Investiga el equipo EXACTO y VERIFICADO que usa el artista en la canción especificada.
@@ -449,10 +607,35 @@ Responde SOLO con este JSON (sin markdown):
           });
 
           const researchData = parseJSON<{
-            amp_reference?: { marca: string; modelo: string; caracter: string; gain_base: number; eq_base: { bass: number; mid: number; treble: number }; notes: string };
-            song_structure?: Array<{ section: string; intensity: number; texture: string; key_effects: string[]; eq_adjust?: { bass: number; mid: number; treble: number }; gain_delta?: number; technique?: string }>;
-            efectos?: Array<{ nombre: string; marca?: string; modelo?: string; tipo: string; posicion?: string }>;
-            amplificador?: { marca?: string; modelo?: string; configuracion?: string };
+            amp_reference?: {
+              marca: string;
+              modelo: string;
+              caracter: string;
+              gain_base: number;
+              eq_base: { bass: number; mid: number; treble: number };
+              notes: string;
+            };
+            song_structure?: Array<{
+              section: string;
+              intensity: number;
+              texture: string;
+              key_effects: string[];
+              eq_adjust?: { bass: number; mid: number; treble: number };
+              gain_delta?: number;
+              technique?: string;
+            }>;
+            efectos?: Array<{
+              nombre: string;
+              marca?: string;
+              modelo?: string;
+              tipo: string;
+              posicion?: string;
+            }>;
+            amplificador?: {
+              marca?: string;
+              modelo?: string;
+              configuracion?: string;
+            };
             guitarra?: { marca?: string; modelo?: string; pastillas?: string };
             cadena_senal?: string[];
             tecnica?: string;
@@ -460,28 +643,49 @@ Responde SOLO con este JSON (sin markdown):
             es_tocado_limpio?: boolean;
             fuente_verificada?: string;
             notas?: string;
-            estructura?: Array<{ seccion: string; dinamica?: string; nivel_distorsion?: string; efectos_clave?: string[]; gain_relativo?: number; tecnica?: string; notas?: string }>;
+            estructura?: Array<{
+              seccion: string;
+              dinamica?: string;
+              nivel_distorsion?: string;
+              efectos_clave?: string[];
+              gain_relativo?: number;
+              tecnica?: string;
+              notas?: string;
+            }>;
           }>(result.content);
 
           toneResearch = {
             // ── v2 campos ──
-            ampReference: researchData.amp_reference ? {
-              marca: researchData.amp_reference.marca || "",
-              modelo: researchData.amp_reference.modelo || "",
-              caracter: (researchData.amp_reference.caracter as "bright" | "dark" | "neutral") || "neutral",
-              gainBase: researchData.amp_reference.gain_base ?? 50,
-              eqBase: researchData.amp_reference.eq_base || { bass: 50, mid: 50, treble: 50 },
-              notes: researchData.amp_reference.notes || "",
-            } : undefined,
-            songStructure: Array.isArray(researchData.song_structure) ? researchData.song_structure.map(s => ({
-              section: s.section as any,
-              intensity: s.intensity ?? 5,
-              texture: (s.texture as "clean" | "crunch" | "heavy") || "crunch",
-              keyEffects: s.key_effects || [],
-              eqAdjust: s.eq_adjust,
-              gainDelta: s.gain_delta,
-              technique: s.technique,
-            })) : undefined,
+            ampReference: researchData.amp_reference
+              ? {
+                  marca: researchData.amp_reference.marca || "",
+                  modelo: researchData.amp_reference.modelo || "",
+                  caracter:
+                    (researchData.amp_reference.caracter as
+                      | "bright"
+                      | "dark"
+                      | "neutral") || "neutral",
+                  gainBase: researchData.amp_reference.gain_base ?? 50,
+                  eqBase: researchData.amp_reference.eq_base || {
+                    bass: 50,
+                    mid: 50,
+                    treble: 50,
+                  },
+                  notes: researchData.amp_reference.notes || "",
+                }
+              : undefined,
+            songStructure: Array.isArray(researchData.song_structure)
+              ? researchData.song_structure.map((s) => ({
+                  section: s.section as any,
+                  intensity: s.intensity ?? 5,
+                  texture:
+                    (s.texture as "clean" | "crunch" | "heavy") || "crunch",
+                  keyEffects: s.key_effects || [],
+                  eqAdjust: s.eq_adjust,
+                  gainDelta: s.gain_delta,
+                  technique: s.technique,
+                }))
+              : undefined,
             baseTone: {
               nivelDistorsion: researchData.nivel_distorsion || "crunch",
               esTocadoLimpio: researchData.es_tocado_limpio ?? false,
@@ -496,22 +700,29 @@ Responde SOLO con este JSON (sin markdown):
             notes: researchData.notas || "",
             nivelDistorsion: researchData.nivel_distorsion,
             esTocadoLimpio: researchData.es_tocado_limpio,
-            estructura: Array.isArray(researchData.estructura) ? researchData.estructura : [],
+            estructura: Array.isArray(researchData.estructura)
+              ? researchData.estructura
+              : [],
             researchedAt: new Date(),
           };
 
           await db.updateSongToneResearch(songDbId, toneResearch);
-          console.log(`[generatePreset] Tono investigado y cacheado para: ${input.title}`);
-
+          console.log(
+            `[generatePreset] Tono investigado y cacheado para: ${input.title}`,
+          );
         } catch (researchError) {
-          console.error("[generatePreset] Error investigando tono:", researchError);
+          console.error(
+            "[generatePreset] Error investigando tono:",
+            researchError,
+          );
           toneResearch = {
             equipment: [],
             amplificador: {},
             guitarra: {},
             cadenaSenal: [],
             techniques: [],
-            notes: "No se pudo investigar el tono. n8n generará presets basados solo en el equipo del usuario.",
+            notes:
+              "No se pudo investigar el tono. n8n generará presets basados solo en el equipo del usuario.",
             nivelDistorsion: undefined,
             esTocadoLimpio: undefined,
             estructura: [],
@@ -519,69 +730,34 @@ Responde SOLO con este JSON (sin markdown):
           };
         }
       } else {
-        console.log(`[generatePreset] Cache hit — tono ya investigado para: ${input.title}`);
+        console.log(
+          `[generatePreset] Cache hit — tono ya investigado para: ${input.title}`,
+        );
       }
 
       // ── Paso 3: Recuperar gear del usuario ───────────────────────────
-      const gearList = await Promise.all(input.gearIds.map((id) => db.getGearById(id)));
-      const validGear = gearList.filter(Boolean) as NonNullable<(typeof gearList)[number]>[];
+      const gearList = await Promise.all(
+        input.gearIds.map((id) => db.getGearById(id)),
+      );
+      const validGear = gearList.filter(Boolean) as NonNullable<
+        (typeof gearList)[number]
+      >[];
 
       if (validGear.length === 0) {
         throw new Error("No se encontró el equipo seleccionado");
       }
 
-      // ── Paso 4: Llamar a n8n ─────────────────────────────────────────
-      const songWithTone = { ...song, toneResearch };
+      // ── Paso 4+5: Generar presets (n8n + fallback + verify) ─────────
+      const { presetsData, verification } = await generatePresetsCore({
+        song: { ...song, toneResearch },
+        gear: validGear,
+        userId,
+        songDbId,
+      });
 
-      let presetsData: N8nPresetResponse;
-
-      try {
-        presetsData = await callN8nPresetGenerator({
-          song: songWithTone,
-          gear: validGear,
-          userId: String((ctx as any)?.user?._id || (ctx as any)?.user?.openId || "anonymous"),
-          songDbId,
-        });
-      } catch (n8nError) {
-        if ((n8nError as Error).message === "N8N_FALLBACK") {
-          console.warn("[generatePreset] Fallback OpenAI — configurar N8N_WEBHOOK_URL");
-          const tr = songWithTone.toneResearch;
-          const toneCtx = tr ? [
-            `GANANCIA: ${tr.nivelDistorsion ?? "no especificado"}`,
-            `LIMPIO: ${tr.esTocadoLimpio ? "SÍ — DRIVE OFF + GAIN ≤ 3" : "No"}`,
-            `CADENA: ${tr.cadenaSenal?.join(" → ") || "no especificada"}`,
-            `AMP: ${tr.amplificador ? `${(tr.amplificador as any).marca ?? ""} ${(tr.amplificador as any).modelo ?? ""}`.trim() : "no especificado"}`,
-            `NOTAS: ${tr.notes || "ninguna"}`,
-          ].join("\n") : "Sin datos.";
-          const staticGear  = validGear.filter(g => g.type === "amplificador" || g.type === "guitarra");
-          const dynamicGear = validGear.filter(g => g.type !== "amplificador" && g.type !== "guitarra");
-          const fallbackPrompt = `Eres un técnico de sonido experto. Genera presets COMPLETOS con valores EXACTOS.\nCANCIÓN: ${input.title} — ${input.artist}\nTONO:\n${toneCtx}\nEQUIPO:\n${validGear.map((g, i) => `[EQUIPO ${i+1}] gearId:${g._id} | ${g.brand} ${g.model} | type:${g.type}`).join("\n")}\nREGLA: AMPLIFICADORES/GUITARRAS → configuracion_base. PEDALERAS → presetsData.\nEstático: ${staticGear.map(g => `gearId:${g._id} = ${g.brand} ${g.model} (${g.type})`).join(", ") || "ninguno"}\nDinámico: ${dynamicGear.map(g => `gearId:${g._id} = ${g.brand} ${g.model} (${g.type})`).join(", ") || "ninguno"}\nMÁXIMO 3 presets. Nombres "A0","A1","A2". Valores numéricos. Si esTocadoLimpio=true: DRIVE OFF.\nResponde SOLO con JSON:\n{"configuracion_base":[],"presets":[],"advertencia":null}`;
-          const fbResult = await invokeLLM({
-            messages: [
-              { role: "system", content: fallbackPrompt },
-              { role: "user", content: `Genera presets para "${input.title}" de ${input.artist}.` },
-            ],
-            responseFormat: { type: "json" },
-            useWebSearch: false,
-          });
-          const fbData = parseJSON<{ configuracion_base?: GearConfigRaw[]; presets: Array<{ nombre: string; momento_cancion: string; descripcion: string; configuracion: GearConfigRaw[]; nota_tecnica?: string; consejos?: string[] }>; advertencia?: string }>(fbResult.content);
-          const gearIdMap: Record<string, string> = {};
-          validGear.forEach((g, idx) => { gearIdMap[`equipo_${idx + 1}`] = String(g._id); });
-          const mapId = (c: GearConfigRaw) => ({ ...c, gearId: gearIdMap[c.gearId] ?? c.gearId });
-          presetsData = {
-            success: true,
-            configuracion_base: (fbData.configuracion_base || []).map(mapId),
-            presetsData: (fbData.presets || []).map(p => ({ ...p, configuracion: (p.configuracion || []).map(mapId) })),
-            advertencia: fbData.advertencia,
-          };
-        } else {
-          throw n8nError;
-        }
-      }
-
-      // ── Paso 5: Guardar preset en MongoDB ────────────────────────────
+      // ── Paso 6: Guardar preset en MongoDB ────────────────────────────
       const preset = await db.createPreset({
-        userId: String((ctx as any)?.user?._id || (ctx as any)?.user?.openId || "anonymous"),
+        userId,
         songId: songDbId,
         songTitle: input.title,
         songArtist: input.artist,
@@ -593,7 +769,7 @@ Responde SOLO con este JSON (sin markdown):
       });
 
       await db.addSearchHistory({
-        userId: String((ctx as any)?.user?._id || (ctx as any)?.user?.openId || "anonymous"),
+        userId,
         musicBrainzId: input.musicBrainzId,
         title: input.title,
         artist: input.artist,
@@ -606,6 +782,11 @@ Responde SOLO con este JSON (sin markdown):
         toneResearch,
         songDbId,
         ampPresetGlobal: presetsData.ampPresetGlobal || null,
+        verification: {
+          valid: verification.valid,
+          errors: verification.errors,
+          warnings: verification.warnings,
+        },
       };
     }),
 });
@@ -614,7 +795,7 @@ Responde SOLO con este JSON (sin markdown):
 
 const gearRouter = router({
   list: protectedProcedure.query(({ ctx }) =>
-    db.getUserGear(String(ctx.user._id || ctx.user.openId))
+    db.getUserGear(String(ctx.user._id || ctx.user.openId)),
   ),
 
   getById: protectedProcedure
@@ -624,10 +805,13 @@ const gearRouter = router({
   create: protectedProcedure
     .input(gearSchema)
     .mutation(async ({ ctx, input }) => {
-      const gear = await db.createGear(String(ctx.user._id || ctx.user.openId), {
-        ...input,
-        isDefault: false,
-      });
+      const gear = await db.createGear(
+        String(ctx.user._id || ctx.user.openId),
+        {
+          ...input,
+          isDefault: false,
+        },
+      );
 
       return gear;
     }),
@@ -646,29 +830,37 @@ const gearRouter = router({
       const userId = String(ctx.user._id || ctx.user.openId);
       const userGear = await db.getUserGear(userId);
       for (const g of userGear) {
-        if (g.isDefault) await db.updateGear(String(g._id), { isDefault: false });
+        if (g.isDefault)
+          await db.updateGear(String(g._id), { isDefault: false });
       }
       return db.updateGear(input.id, { isDefault: true });
     }),
 
   getSpecs: protectedProcedure
-    .input(z.object({
-      gearId: z.string(),
-      brand: z.string(),
-      model: z.string(),
-      type: z.string(),
-    }))
+    .input(
+      z.object({
+        gearId: z.string(),
+        brand: z.string(),
+        model: z.string(),
+        type: z.string(),
+      }),
+    )
     .query(async ({ input }) => {
-      const N8N_BASE = (ENV.n8nWebhookUrl || ENV.n8nWebhookUrlV2)?.replace(/\/webhook\/.*$/, '');
-      const webhookUrl = N8N_BASE ? `${N8N_BASE}/webhook/guitartone-gear-specs` : undefined;
+      const N8N_BASE = (ENV.n8nWebhookUrl || ENV.n8nWebhookUrlV2)?.replace(
+        /\/webhook\/.*$/,
+        "",
+      );
+      const webhookUrl = N8N_BASE
+        ? `${N8N_BASE}/webhook/guitartone-gear-specs`
+        : undefined;
       if (!webhookUrl) return { success: false, specs: null };
 
       try {
         const response = await fetch(webhookUrl, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'x-webhook-secret': ENV.n8nWebhookSecret || '',
+            "Content-Type": "application/json",
+            "x-webhook-secret": ENV.n8nWebhookSecret || "",
           },
           body: JSON.stringify({
             gearId: input.gearId,
@@ -680,7 +872,10 @@ const gearRouter = router({
         });
 
         if (!response.ok) return { success: false, specs: null };
-        const data = await response.json() as { success: boolean; specs: Record<string, unknown> };
+        const data = (await response.json()) as {
+          success: boolean;
+          specs: Record<string, unknown>;
+        };
         const specs = data.specs || null;
         // Persistir specs en MongoDB para que generatePreset tenga procId
         if (specs && input.gearId) {
@@ -697,11 +892,11 @@ const gearRouter = router({
 
 const presetsRouter = router({
   list: protectedProcedure.query(({ ctx }) =>
-    db.getUserPresets(String(ctx.user._id || ctx.user.openId))
+    db.getUserPresets(String(ctx.user._id || ctx.user.openId)),
   ),
 
   favorites: protectedProcedure.query(({ ctx }) =>
-    db.getUserFavoritePresets(String(ctx.user._id || ctx.user.openId))
+    db.getUserFavoritePresets(String(ctx.user._id || ctx.user.openId)),
   ),
 
   getById: protectedProcedure
@@ -715,212 +910,61 @@ const presetsRouter = router({
   generate: protectedProcedure
     .input(generatePresetSchema)
     .mutation(async ({ ctx, input }) => {
+      const userId = String(ctx.user._id || ctx.user.openId);
       const song = await db.getSongById(input.songId);
       if (!song) throw new Error("Canción no encontrada");
 
-      const gearList = await Promise.all(input.gearIds.map((id) => db.getGearById(id)));
-      let validGear = gearList.filter(Boolean) as NonNullable<(typeof gearList)[number]>[];
+      const gearList = await Promise.all(
+        input.gearIds.map((id) => db.getGearById(id)),
+      );
+      const validGear = gearList.filter(Boolean) as NonNullable<
+        (typeof gearList)[number]
+      >[];
 
-      if (validGear.length === 0) throw new Error("No se encontró el equipo seleccionado");
+      if (validGear.length === 0)
+        throw new Error("No se encontró el equipo seleccionado");
 
-      // ── Construir contexto del tono original ────────────────────────────
-      const tr = song.toneResearch;
-      const toneContext = tr
-        ? [
-            `NIVEL DE GANANCIA: ${tr.nivelDistorsion ?? "no especificado"}`,
-            `TONO LIMPIO: ${tr.esTocadoLimpio ? "Sí — usa ganancia baja o 0" : "No — requiere distorsión/crunch"}`,
-            `CADENA DE SEÑAL ORIGINAL: ${tr.cadenaSenal?.join(" → ") || "no especificada"}`,
-            `AMPLIFICADOR ORIGINAL: ${tr.amplificador ? `${tr.amplificador.marca ?? ""} ${tr.amplificador.modelo ?? ""} — ${tr.amplificador.configuracion ?? ""}`.trim() : "no especificado"}`,
-            `TÉCNICA: ${tr.techniques?.join(", ") || "no especificada"}`,
-            `NOTAS: ${tr.notes || "ninguna"}`,
-          ].join("\n")
-        : "Sin datos de investigación del tono original.";
-
-      // ── Construir descripción detallada de cada equipo ───────────────────
-      const gearBlocks = validGear.map((g, idx) => {
-        const isMulti = g.manualData?.esMultiEfectos ?? (g.type === "pedalera" || g.type === "procesador");
-        const isAmp   = g.type === "amplificador";
-
-        const lines: string[] = [];
-        lines.push(`=== EQUIPO ${idx + 1}: ${g.brand || ""} ${g.model || ""} — ${g.name} [ID: equipo_${idx + 1}] ===`);
-        lines.push(`Tipo: ${g.type}`);
-
-        if (g.manualData) {
-          lines.push(`Descripción: ${g.manualData.description}`);
-
-          // ── Multi-efectos: mostrar estructura modular ──
-          if (isMulti && g.manualData.modules && g.manualData.modules.length > 0) {
-            lines.push(`MULTI-EFECTOS — Módulos disponibles (configura CADA UNO en el preset):`);
-            g.manualData.modules.forEach((mod) => {
-              lines.push(`\n  MÓDULO: ${mod.nombre} (${mod.label})`);
-              if (mod.puedeApagarse) lines.push(`  Puede estar ON u OFF (incluir "estado": "ON"/"OFF")`);
-              if (mod.efectos.length > 0) {
-                lines.push(`  Efectos disponibles:`);
-                mod.efectos.forEach((ef) => {
-                  const params = ef.parametros.map(p => `${p.nombre} [${p.rango}]`).join(", ");
-                  lines.push(`    - ${ef.tipo}: ${params}`);
-                });
-              }
-            });
-          }
-
-          // ── Amplificador o pedal simple: parámetros planos ──
-          if (!isMulti && g.manualData.parameters.length > 0) {
-            const label = isAmp ? "AMPLIFICADOR — Controles a configurar:" : "PEDAL — Controles a configurar:";
-            lines.push(label);
-            g.manualData.parameters.forEach((p) => {
-              lines.push(`  • ${p.name}: rango ${p.range}${p.defaultValue ? ` (default: ${p.defaultValue})` : ""} — ${p.description}`);
-            });
-          }
-
-          // ── Learnings críticos ──
-          if (g.manualData.learnings && g.manualData.learnings.length > 0) {
-            lines.push(`\n⚠ REGLAS CRÍTICAS DEL EQUIPO (OBLIGATORIAS — no violar):`);
-            g.manualData.learnings.forEach((l, i) => lines.push(`  ${i + 1}. ${l}`));
-          }
-
-          if (g.manualData.notes) {
-            lines.push(`\nNotas adicionales: ${g.manualData.notes}`);
-          }
-        } else {
-          lines.push(`[Sin datos de manual — usa parámetros estándar del modelo ${g.brand} ${g.model}]`);
-          if (isMulti) lines.push(`MULTI-EFECTOS: incluye módulos COMP, DRIVE, EQ, MOD, DELAY, REVERB con ON/OFF.`);
-          if (isAmp)   lines.push(`AMPLIFICADOR: configura GAIN/PRE, VOLUME/POST, BASS/LOW, MIDDLE/MID, TREBLE/HIGH.`);
-        }
-
-        return lines.join("\n");
+      // ── Generar presets (n8n + fallback + verify) ──────────────────────
+      const { presetsData, verification } = await generatePresetsCore({
+        song,
+        gear: validGear,
+        userId,
+        songDbId: input.songId,
       });
 
-      // ── Formato de salida para multi-efectos (ejemplo basado en ZOOM B1) ──
-      const multiGear = validGear.find(g => g.manualData?.esMultiEfectos ?? (g.type === "pedalera" || g.type === "procesador"));
-      const exampleModuleFormat = multiGear
-        ? `Para el MULTI-EFECTOS, los parametros deben tener este formato de módulos:
-{
-  "PATCH_LEVEL": 80,
-  "COMP":  { "estado": "ON",  "tipo": "Compressor", "valor": "C3" },
-  "EFX":   { "estado": "OFF" },
-  "DRIVE": { "estado": "ON",  "tipo": "TUBE PRE", "GAIN": 30, "MIX": 60 },
-  "EQ":    { "LO": 10, "MID": 12, "HI": 14 },
-  "ZNR":   { "estado": "ON",  "tipo": "ZNR", "sensibilidad": 3 },
-  "MOD_DELAY":    { "estado": "ON",  "tipo": "Chorus", "Prm1": "C2", "Prm2": 10 },
-  "REVERB_DELAY": { "estado": "ON",  "tipo": "Room",   "Prm1": "R3", "Prm2": 3  }
-}
-Módulos con "estado": "OFF" NO llevan parámetros adicionales.`
-        : "";
+      // ── Persistir en MongoDB ─────────────────────────────────────────
+      const preset = await db.createPreset({
+        userId,
+        songId: input.songId,
+        songTitle: song.title,
+        songArtist: song.artist,
+        gearIds: input.gearIds,
+        configuracion_base: presetsData.configuracion_base || [],
+        presetsData: presetsData.presetsData,
+        advertencia: presetsData.advertencia,
+        isFavorite: false,
+      });
 
-      // Clasificar equipo: estático (amp/guitarra) vs dinámico (pedaleras/pedales)
-      const staticGear  = validGear.filter(g => g.type === "amplificador" || g.type === "guitarra");
-      const dynamicGear = validGear.filter(g => g.type !== "amplificador" && g.type !== "guitarra");
+      await db.addSearchHistory({
+        userId,
+        musicBrainzId: song.musicBrainzId,
+        title: song.title,
+        artist: song.artist,
+        releaseDate: song.releaseDate,
+        coverUrl: song.coverUrl,
+      });
 
-      const staticGearList  = staticGear.map((g, i) => `equipo_${validGear.indexOf(g) + 1} = ${g.brand || ""} ${g.model || ""} (${g.type})`).join(", ");
-      const dynamicGearList = dynamicGear.map((g, i) => `equipo_${validGear.indexOf(g) + 1} = ${g.brand || ""} ${g.model || ""} (${g.type})`).join(", ");
-
-      // ── Generar presets via n8n (o fallback a OpenAI) ───────────────────
-      try {
-        let presetsData: N8nPresetResponse;
-
-        try {
-          presetsData = await callN8nPresetGenerator({
-            song,
-            gear: validGear,
-            userId: String(ctx.user._id || ctx.user.openId),
-            songDbId: input.songId,
-          });
-        } catch (n8nError) {
-          if ((n8nError as Error).message === "N8N_FALLBACK") {
-            // ── Fallback a OpenAI directo (desarrollo sin n8n) ─────────────
-            console.warn("[Preset] Fallback OpenAI — configurar N8N_WEBHOOK_URL para producción");
-            const tr = song.toneResearch;
-            const toneContext = tr ? [
-              `GANANCIA: ${tr.nivelDistorsion ?? "no especificado"}`,
-              `LIMPIO: ${tr.esTocadoLimpio ? "SÍ — DRIVE OFF + GAIN ≤ 3" : "No"}`,
-              `CADENA: ${tr.cadenaSenal?.join(" → ") || "no especificada"}`,
-              `AMP ORIGINAL: ${tr.amplificador ? `${tr.amplificador.marca ?? ""} ${tr.amplificador.modelo ?? ""} — ${tr.amplificador.configuracion ?? ""}`.trim() : "no especificado"}`,
-              `TÉCNICA: ${tr.techniques?.join(", ") || "no especificada"}`,
-              `NOTAS: ${tr.notes || "ninguna"}`,
-            ].join("\n") : "Sin datos.";
-            const staticGear  = validGear.filter(g => g.type === "amplificador" || g.type === "guitarra");
-            const dynamicGear = validGear.filter(g => g.type !== "amplificador" && g.type !== "guitarra");
-            const staticList  = staticGear.map(g => `equipo_${validGear.indexOf(g) + 1} = ${g.brand || ""} ${g.model || ""} (${g.type})`).join(", ");
-            const dynamicList = dynamicGear.map(g => `equipo_${validGear.indexOf(g) + 1} = ${g.brand || ""} ${g.model || ""} (${g.type})`).join(", ");
-            const gearBlocks  = validGear.map((g, idx) => {
-              const isMulti = g.manualData?.esMultiEfectos ?? (g.type === "pedalera" || g.type === "procesador");
-              const lines: string[] = [`=== EQUIPO ${idx + 1}: ${g.brand || ""} ${g.model || ""} [ID: equipo_${idx + 1}] ===`];
-              if (g.manualData) {
-                lines.push(`Descripción: ${g.manualData.description}`);
-                if (isMulti && g.manualData.modules?.length) {
-                  g.manualData.modules.forEach(mod => {
-                    lines.push(`  MÓDULO: ${mod.nombre} (${mod.label})`);
-                    mod.efectos.forEach(ef => lines.push(`    - ${ef.tipo}: ${ef.parametros.map(p => `${p.nombre}[${p.rango}]`).join(", ")}`));
-                  });
-                } else {
-                  g.manualData.parameters.forEach(p => lines.push(`  • ${p.name}: rango ${p.range} — ${p.description}`));
-                }
-                if (g.manualData.learnings?.length) {
-                  lines.push("⚠ REGLAS CRÍTICAS:");
-                  g.manualData.learnings.forEach((l, i) => lines.push(`  ${i + 1}. ${l}`));
-                }
-              }
-              return lines.join("\n");
-            });
-            const multiGear = validGear.find(g => g.manualData?.esMultiEfectos ?? (g.type === "pedalera" || g.type === "procesador"));
-            const exampleFmt = multiGear ? `Formato modular para multi-efectos:\n{"COMP":{"estado":"ON","tipo":"Compressor","valor":"C3"},"DRIVE":{"estado":"OFF"},"EQ":{"LO":10,"MID":12,"HI":14}}` : "";
-            const fallbackPrompt = `Eres un técnico de sonido experto. Genera presets COMPLETOS con valores EXACTOS.\nCANCIÓN: ${song.title} — ${song.artist}\nTONO:\n${toneContext}\nEQUIPO:\n${gearBlocks.join("\n\n")}\n${exampleFmt}\nREGLA: AMPLIFICADORES/GUITARRAS → "configuracion_base". PEDALERAS → cada preset.\nEstático: ${staticList || "ninguno"} | Dinámico: ${dynamicList || "ninguno"}\nMÁXIMO 3 presets. Nombres "A0","A1","A2". Solo valores numéricos. Si esTocadoLimpio=true: DRIVE OFF.\nResponde SOLO con JSON:\n{"configuracion_base":[{"gearId":"equipo_X","gearNombre":"","gearTipo":"amplificador","parametros":{}}],"presets":[{"nombre":"A0","momento_cancion":"","descripcion":"","configuracion":[{"gearId":"equipo_Y","gearNombre":"","gearTipo":"pedalera","parametros":{}}],"nota_tecnica":null,"consejos":[]}],"advertencia":null}`;
-            const fbResult = await invokeLLM({
-              messages: [
-                { role: "system", content: fallbackPrompt },
-                { role: "user", content: `Genera los presets para "${song.title}" de ${song.artist}.` },
-              ],
-              responseFormat: { type: "json" },
-              useWebSearch: false,
-            });
-            const fbData = parseJSON<{
-              configuracion_base?: GearConfigRaw[];
-              presets: Array<{ nombre: string; momento_cancion: string; descripcion: string; configuracion: GearConfigRaw[]; nota_tecnica?: string; consejos?: string[]; }>;
-              advertencia?: string;
-            }>(fbResult.content);
-            const gearIdMap: Record<string, string> = {};
-            validGear.forEach((g, idx) => { gearIdMap[`equipo_${idx + 1}`] = String(g._id); });
-            const mapId = (c: GearConfigRaw) => ({ ...c, gearId: gearIdMap[c.gearId] ?? c.gearId });
-            presetsData = {
-              success: true,
-              configuracion_base: (fbData.configuracion_base || []).map(mapId),
-              presetsData: (fbData.presets || []).map(p => ({ ...p, configuracion: (p.configuracion || []).map(mapId) })),
-              advertencia: fbData.advertencia,
-            };
-          } else {
-            throw n8nError;
-          }
-        }
-
-        // ── Persistir en MongoDB ─────────────────────────────────────────
-        const preset = await db.createPreset({
-          userId: String(ctx.user._id || ctx.user.openId),
-          songId: input.songId,
-          songTitle: song.title,
-          songArtist: song.artist,
-          gearIds: input.gearIds,
-          configuracion_base: presetsData.configuracion_base || [],
-          presetsData: presetsData.presetsData,
-          advertencia: presetsData.advertencia,
-          isFavorite: false,
-        });
-
-        await db.addSearchHistory({
-          userId: String(ctx.user._id || ctx.user.openId),
-          musicBrainzId: song.musicBrainzId,
-          title: song.title,
-          artist: song.artist,
-          releaseDate: song.releaseDate,
-          coverUrl: song.coverUrl,
-        });
-
-        return { success: true, preset, toneResearch: song.toneResearch };
-
-      } catch (error) {
-        console.error("[Preset Generation] Error:", error);
-        throw new Error("Error generando presets");
-      }
+      return {
+        success: true,
+        preset,
+        toneResearch: song.toneResearch,
+        ampPresetGlobal: presetsData.ampPresetGlobal || null,
+        verification: {
+          valid: verification.valid,
+          errors: verification.errors,
+          warnings: verification.warnings,
+        },
+      };
     }),
 
   update: protectedProcedure
@@ -934,7 +978,7 @@ Módulos con "estado": "OFF" NO llevan parámetros adicionales.`
             isFavorite: z.boolean().optional(),
           })
           .partial(),
-      })
+      }),
     )
     .mutation(({ input }) => db.updatePreset(input.id, input.data)),
 
@@ -947,10 +991,10 @@ Módulos con "estado": "OFF" NO llevan parámetros adicionales.`
 
 const historyRouter = router({
   list: protectedProcedure.query(({ ctx }) =>
-    db.getUserSearchHistory(String(ctx.user._id || ctx.user.openId))
+    db.getUserSearchHistory(String(ctx.user._id || ctx.user.openId)),
   ),
   clear: protectedProcedure.mutation(({ ctx }) =>
-    db.clearUserSearchHistory(String(ctx.user._id || ctx.user.openId))
+    db.clearUserSearchHistory(String(ctx.user._id || ctx.user.openId)),
   ),
 });
 
@@ -965,7 +1009,7 @@ const authRouter = router({
         name: z.string().min(1),
         email: z.string().email(),
         password: z.string().min(6),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const existing = await db.getUserByEmail(input.email);
@@ -983,7 +1027,10 @@ const authRouter = router({
 
       const token = await createSessionToken(openId, input.name);
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      ctx.res.cookie(COOKIE_NAME, token, {
+        ...cookieOptions,
+        maxAge: ONE_YEAR_MS,
+      });
 
       const user = await db.getUserByOpenId(openId);
       return { success: true, user };
@@ -994,11 +1041,12 @@ const authRouter = router({
       z.object({
         email: z.string().email(),
         password: z.string().min(1),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const user = await db.getUserByEmail(input.email);
-      if (!user || !user.passwordHash) throw new Error("Email o contraseña incorrectos");
+      if (!user || !user.passwordHash)
+        throw new Error("Email o contraseña incorrectos");
 
       const valid = verifyPassword(input.password, user.passwordHash);
       if (!valid) throw new Error("Email o contraseña incorrectos");
@@ -1007,7 +1055,10 @@ const authRouter = router({
 
       const token = await createSessionToken(user.openId, user.name ?? "");
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      ctx.res.cookie(COOKIE_NAME, token, {
+        ...cookieOptions,
+        maxAge: ONE_YEAR_MS,
+      });
 
       return { success: true, user };
     }),
